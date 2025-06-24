@@ -1,0 +1,676 @@
+/* Global Styles */
+.app-container {
+  min-height: 100vh;
+  background-color: #111827;
+  color: white;
+}
+
+/* Navigation */
+.nav-bar {
+  background-color: #1f2937;
+  border-bottom: 1px solid #374151;
+}
+
+.nav-content {
+  padding: 1rem 1.5rem;
+}
+
+.nav-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-icon {
+  background-color: #2563eb;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+
+.logo-code-icon {
+  width: 2rem;
+  height: 2rem;
+  color: white;
+}
+
+.logo-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.nav-link {
+  background: none;
+  border: none;
+  color: #d1d5db;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  transition: color 0.2s;
+}
+
+.nav-link:hover {
+  color: white;
+}
+
+.nav-link.active {
+  color: white;
+  border-bottom: 2px solid #3b82f6;
+  padding-bottom: 0.25rem;
+}
+
+.add-problem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.plus-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Main Layout */
+.main-layout {
+  display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 320px;
+  min-width: 320px;
+  background-color: #1f2937;
+  border-right: 1px solid #374151;
+  height: calc(100vh - 80px);
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+}
+
+.sidebar-content {
+  padding: 1.5rem;
+}
+
+.working-problems-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  color: #fb923c;
+}
+
+.trophy-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+.working-problems-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.working-problem-card {
+  padding: 0.75rem;
+  background-color: #374151;
+  border-radius: 0.5rem;
+}
+
+.working-problem-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.working-problem-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.working-indicator {
+  width: 0.75rem;
+  height: 0.75rem;
+  background-color: #fb923c;
+  border-radius: 50%;
+  margin-top: 0.25rem;
+  flex-shrink: 0;
+}
+
+.working-problem-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+  line-height: 1.25;
+}
+
+.working-problem-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.acceptance-rate {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.no-working-problems {
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  max-width: calc(100vw - 320px);
+}
+
+.content-header {
+  margin-bottom: 2rem;
+}
+
+/* Topic Tags */
+.topic-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.topic-tag {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  border: 1px solid #4b5563;
+  background-color: #374151;
+  color: #d1d5db;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.topic-tag:hover {
+  background-color: #4b5563;
+}
+
+.topic-tag-active {
+  background-color: #2563eb;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.topic-count {
+  color: #9ca3af;
+}
+
+.topic-tag-active .topic-count {
+  color: #dbeafe;
+}
+
+/* Categories */
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.category-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #4b5563;
+  background-color: #374151;
+  color: #d1d5db;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.category-btn:hover {
+  color: white;
+  background-color: #4b5563;
+}
+
+.category-btn-active {
+  background-color: #2563eb;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.category-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Search and Controls */
+.search-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.search-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.search-input-container {
+  position: relative;
+}
+
+.search-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  position: absolute;
+  left: 0.75rem;
+  top: 0.75rem;
+  color: #9ca3af;
+}
+
+.search-input {
+  background-color: #374151;
+  border: 1px solid #4b5563;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
+  width: 320px;
+  color: white;
+  font-size: 0.875rem;
+}
+
+.search-input::placeholder {
+  color: #9ca3af;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.controls-section {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.working-count {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sparkles-icon {
+  width: 1rem;
+  height: 1rem;
+  color: #60a5fa;
+}
+
+.count-text {
+  color: #d1d5db;
+}
+
+/* Active Filters */
+.active-filters {
+  margin-bottom: 1rem;
+}
+
+.filter-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.filter-label {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.filter-tag {
+  padding: 0.25rem 0.5rem;
+  background-color: #2563eb;
+  color: white;
+  font-size: 0.75rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.filter-remove {
+  background: none;
+  border: none;
+  color: #dbeafe;
+  cursor: pointer;
+  margin-left: 0.25rem;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.filter-remove:hover {
+  color: white;
+}
+
+.clear-filters {
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.clear-filters:hover {
+  color: white;
+}
+
+/* Problems List */
+.problems-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.problem-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background-color: #1f2937;
+  border-radius: 0.5rem;
+  border: 1px solid #374151;
+  transition: border-color 0.2s;
+}
+
+.problem-card:hover {
+  border-color: #4b5563;
+}
+
+.problem-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.problem-checkbox {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 2px solid #6b7280;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.problem-checkbox:hover {
+  border-color: #fb923c;
+}
+
+.problem-checkbox-active {
+  background-color: #fb923c;
+  border-color: #fb923c;
+}
+
+.checkbox-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  background-color: white;
+  border-radius: 50%;
+}
+
+.problem-title-container {
+  min-width: 0;
+  flex: 1;
+}
+
+.problem-title {
+  color: white;
+  font-weight: 500;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.problem-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-shrink: 0;
+}
+
+.acceptance-info {
+  text-align: right;
+}
+
+.acceptance-label {
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+.acceptance-value {
+  color: white;
+  margin-top: 0.25rem;
+}
+
+/* Difficulty Badges */
+.difficulty-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid;
+  font-size: 0.75rem;
+}
+
+.difficulty-text {
+  font-size: 0.875rem;
+}
+
+/* Easy Difficulty */
+.easy-color {
+  color: #4ade80;
+}
+
+.easy-bg {
+  background-color: rgba(34, 197, 94, 0.1);
+}
+
+.easy-border {
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+/* Medium Difficulty */
+.medium-color {
+  color: #facc15;
+}
+
+.medium-bg {
+  background-color: rgba(234, 179, 8, 0.1);
+}
+
+.medium-border {
+  border-color: rgba(234, 179, 8, 0.3);
+}
+
+/* Hard Difficulty */
+.hard-color {
+  color: #f87171;
+}
+
+.hard-bg {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.hard-border {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Default Difficulty */
+.default-color {
+  color: #9ca3af;
+}
+
+.default-bg {
+  background-color: rgba(107, 114, 128, 0.1);
+}
+
+.default-border {
+  border-color: rgba(107, 114, 128, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+  }
+  
+  .main-content {
+    max-width: calc(100vw - 280px);
+  }
+  
+  .search-input {
+    width: 250px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-layout {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+  }
+  
+  .main-content {
+    max-width: 100%;
+    padding: 1rem;
+  }
+  
+  .search-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .search-input {
+    width: 100%;
+  }
+  
+  .nav-left {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .topic-tags,
+  .categories {
+    justify-content: flex-start;
+  }
+  
+  .problem-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .problem-right {
+    justify-content: space-between;
+    gap: 1rem;
+  }
+}
+*{  margin: 0;
+  padding: 0;
+}
+
+/* Add these styles to your home.css file to remove underlines from links */
+
+/* Remove underline from problem links */
+.problem-link {
+  text-decoration: none !important;
+  color: inherit;
+}
+
+.problem-link:hover {
+  text-decoration: none !important;
+}
+
+.problem-link:visited {
+  text-decoration: none !important;
+}
+
+.problem-link:active {
+  text-decoration: none !important;
+}
+
+/* Remove underline from working problem links */
+.working-problem-link {
+  text-decoration: none !important;
+  color: inherit;
+}
+
+.working-problem-link:hover {
+  text-decoration: none !important;
+}
+
+.working-problem-link:visited {
+  text-decoration: none !important;
+}
+
+.working-problem-link:active {
+  text-decoration: none !important;
+}
+
+/* Global link reset if needed */
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+/* Ensure problem titles don't get underlined */
+.problem-title {
+  text-decoration: none;
+}
+
+.working-problem-title {
+  text-decoration: none;
+}
