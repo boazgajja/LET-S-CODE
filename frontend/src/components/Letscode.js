@@ -16,7 +16,7 @@ export default function LetsCode() {
     const fetchProblems = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:3001/api/problemlist');
+        const response = await fetch('https://let-s-code.onrender.com/api/problemlist');
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

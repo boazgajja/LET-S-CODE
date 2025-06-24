@@ -19,53 +19,39 @@ function solve() {
     // Your code here
 }
 
-// Read input
-const input = require('fs').readFileSync('/dev/stdin', 'utf8').trim();
-const [a, b] = input.split(' ').map(Number);
-
-// Call your function and print result
-console.log(solve(a, b));`,
+solve();`,
   
   python: `# Write your solution here
-def solve(a, b):
+def solve():
     # Your code here
     pass
 
-# Read input
-a, b = map(int, input().split())
 
 # Call your function and print result
-print(solve(a, b))`,
+solve()`,
   
   cpp: `#include <iostream>
 using namespace std;
 
-int solve(int a, int b) {
+int solve() {
     // Your code here
     return 0;
 }
 
 int main() {
-    int a, b;
-    cin >> a >> b;
-    cout << solve(a, b) << endl;
+    solve();
     return 0;
 }`,
   
-  java: `import java.util.Scanner;
-
+  java: `
 public class Main {
-    public static int solve(int a, int b) {
+    public static int solve() {
         // Your code here
         return 0;
     }
     
     public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        int a = sc.nextInt();
-        int b = sc.nextInt();
-        System.out.println(solve(a, b));
-        sc.close();
+        solve();
     }
 }`
 };
@@ -93,7 +79,7 @@ function Problem() {
     const fetchProblem = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:3001/api/problems/pid/${id}`);
+        const response = await fetch(`https://let-s-code.onrender.com/api/problems/pid/${id}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
