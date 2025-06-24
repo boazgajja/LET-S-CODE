@@ -1,4 +1,4 @@
-const Problem = require('./../models/problem');
+const Problem = require('./../models/Problem');
 const ProblemList = require('./../models/problemlists');
 const { connectDB, disconnectDB } = require('./db');
 

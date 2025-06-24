@@ -1,4 +1,4 @@
-const Problem = require('./../models/problem'); // Adjust the path as necessary
+const Problem = require('./../models/Problem'); // Adjust the path as necessary
 const { connectDB, disconnectDB } = require('./db');
 const ProblemList = require('./../models/problemlists'); // Adjust the path as necessary
 // Get all problems from database
