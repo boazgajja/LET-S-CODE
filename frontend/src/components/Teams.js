@@ -51,6 +51,13 @@ const Teams = () => {
     if (result) {
       setInviteCode('');
       setShowJoinForm(false);
+      
+      // Check if it's a pending request
+      if (result.data && result.data.requestPending) {
+        alert('Your join request has been sent to the team owner. You will be added to the team once approved.');
+      } else {
+        alert('You have successfully joined the team!');
+      }
     }
     
     setLoading(false);

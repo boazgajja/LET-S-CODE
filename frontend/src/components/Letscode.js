@@ -153,10 +153,16 @@ export default function LetsCode() {
                   <p className="lc-no-teams">No teams yet</p>
                 ) : (
                   teams.map((team) => (
-                    <Link key={team._id} to={`/teams/${team.team._id}`} className="lc-team-item">
-                      <Users size={16} /> {team.team.name}
-                    </Link>
-                  ))
+                  <Link key={team._id} to={`/teams/${team.team._id}`} className="lc-team-item">
+                    <pre><Users size={16} /> {team.team.name}</pre>
+                    {team.team.joinRequests && team.team.joinRequests.length > 0 && (
+                      <span className="lc-join-request-badge">
+                        {team.team.joinRequests.length}
+                      </span>
+                    )}
+                  </Link>
+                ))
+ 
                 )}
                 <Link to="/teams" className="lc-add-team-link">
                   <Plus size={16} /> Manage Teams

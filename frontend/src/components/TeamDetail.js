@@ -6,7 +6,7 @@ import axios from 'axios';
 
 const TeamDetail = () => {
   const { teamId } = useParams();
-  const { user, addProblemToTeam } = useDataContext();
+  const { user, addProblemToTeam, getTeamJoinRequests, acceptJoinRequest, rejectJoinRequest } = useDataContext();
   const [team, setTeam] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -14,6 +14,8 @@ const TeamDetail = () => {
   const [showAddProblemForm, setShowAddProblemForm] = useState(false);
   const [problemData, setProblemData] = useState({ problemId: '', notes: '' });
   const [inviteCodeCopied, setInviteCodeCopied] = useState(false);
+  const [joinRequests, setJoinRequests] = useState([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -72,6 +74,82 @@ const TeamDetail = () => {
     }
   };
 
+  // Replace the fetchJoinRequests function with this
+  const fetchJoinRequests = async () => {
+    if (!team) return;
+    
+    // Check if user is owner or admin
+    const userMember = team.members.find(member => 
+      member.user._id === user._id && ['owner', 'admin'].includes(member.role)
+    );
+    
+    if (!userMember) return;
+    
+    setLoadingRequests(true);
+    try {
+      const response = await fetch(`http://localhost:3001/api/teams/${teamId}/requests`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        setJoinRequests(data.data);
+      } else {
+        console.error('Failed to fetch team join requests:', data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching team join requests:', error);
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  // Call this when the active tab changes to members
+  useEffect(() => {
+    if (activeTab === 'members') {
+      fetchJoinRequests();
+    }
+  }, [activeTab, team]);
+
+  const handleAcceptRequest = async (userId) => {
+    setLoadingRequests(true);
+    const success = await acceptJoinRequest(teamId, userId);
+    if (success) {
+      // Refresh join requests and team data
+      fetchJoinRequests();
+      // Refresh team details to show new member
+      const response = await fetch(`http://localhost:3001/api/teams/${teamId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setTeam(data.data);
+      }
+      alert('Join request accepted!');
+    } else {
+      alert('Failed to accept join request.');
+    }
+    setLoadingRequests(false);
+  };
+
+  const handleRejectRequest = async (userId) => {
+    setLoadingRequests(true);
+    const success = await rejectJoinRequest(teamId, userId);
+    if (success) {
+      // Refresh join requests
+      fetchJoinRequests();
+      alert('Join request rejected!');
+    } else {
+      alert('Failed to reject join request.');
+    }
+    setLoadingRequests(false);
+  };
+
   if (loading) {
     return <div className="td_loading">Loading team details...</div>;
   }
@@ -83,6 +161,11 @@ const TeamDetail = () => {
   if (!team) {
     return <div className="td_not-found">Team not found</div>;
   }
+
+  // Check if current user is owner or admin
+  const isOwnerOrAdmin = team.members.some(member => 
+    member.user._id === user._id && ['owner', 'admin'].includes(member.role)
+  );
 
   return (
     <div className="td_team-detail-container">
@@ -115,6 +198,9 @@ const TeamDetail = () => {
           onClick={() => setActiveTab('members')}
         >
           Members
+          {isOwnerOrAdmin && joinRequests.length > 0 && (
+            <span className="request-badge">{joinRequests.length}</span>
+          )}
         </button>
       </div>
 
@@ -184,10 +270,8 @@ const TeamDetail = () => {
                       className="td_solve-btn"
                       onClick={() =>{
                         console.log(problem);
-navigate(`/problem/${problem.problem.id}`);
-
-
-                      } }
+                        navigate(`/problem/${problem.problem.id}`);
+                      }}
                     >
                       Solve Problem
                     </button>
@@ -201,6 +285,60 @@ navigate(`/problem/${problem.problem.id}`);
         {activeTab === 'members' && (
           <div className="td_members-tab">
             <h2>Team Members</h2>
+            
+            {/* Show join requests section for owner/admin */}
+            {isOwnerOrAdmin && (
+              <div className="td_join-requests">
+                <h3>Join Requests {loadingRequests && <span>(Loading...)</span>}</h3>
+                {joinRequests.length === 0 ? (
+                  <p>No pending join requests</p>
+                ) : (
+                  <div className="td_requests-list">
+                    {joinRequests.map(request => (
+                      <div key={request.user._id} className="td_request-item">
+                        <div className="td_request-user">
+                          <div className="td_user-avatar">
+                            {request.user.profile?.avatar ? (
+                              <img src={request.user.profile.avatar} alt={request.user.username} />
+                            ) : (
+                              <div className="td_avatar-placeholder">
+                                {request.user.username.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                          <div className="td_user-info">
+                            <h4>
+                              {request.user.profile?.firstName} {request.user.profile?.lastName}
+                            </h4>
+                            <p>@{request.user.username}</p>
+                            <p className="td_request-date">
+                              Requested: {new Date(request.requestedAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="td_request-actions">
+                          <button 
+                            className="td_accept-btn"
+                            onClick={() => handleAcceptRequest(request.user._id)}
+                            disabled={loadingRequests}
+                          >
+                            Accept
+                          </button>
+                          <button 
+                            className="td_reject-btn"
+                            onClick={() => handleRejectRequest(request.user._id)}
+                            disabled={loadingRequests}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            
             <div className="td_members-list">
               {team.members?.map((member) => (
                 <div key={member._id} className="td_member-card">

@@ -350,3 +350,92 @@
   color: #4263eb;
   border-bottom: 2px solid #4263eb;
 }
+
+/* Join Requests Styles */
+.td_join-requests {
+  margin-top: 2rem;
+}
+
+.td_requests-list {
+  margin-top: 1rem;
+}
+
+.td_request-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.td_request-user {
+  display: flex;
+  align-items: center;
+}
+
+.td_user-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  margin-right: 1rem;
+  object-fit: cover;
+}
+
+.td_user-info h4 {
+  margin: 0;
+  color: #ffffff;
+}
+
+.td_user-info p {
+  margin: 0.25rem 0;
+  color: #b0b0b0;
+}
+
+.td_request-date {
+  font-size: 0.8rem;
+  color: #888888;
+}
+
+.td_request-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.td_accept-btn {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.td_accept-btn:hover {
+  background-color: #45a049;
+}
+
+.td_reject-btn {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.td_reject-btn:hover {
+  background-color: #d32f2f;
+}
+
+.request-badge {
+  background-color: #f44336;
+  color: white;
+  border-radius: 50%;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+}

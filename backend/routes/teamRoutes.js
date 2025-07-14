@@ -201,10 +201,138 @@ router.post('/teams/join', authenticateToken, async (req, res) => {
       });
     }
 
-    // Add user to team
+    // Check if user already has a pending join request
+    const hasPendingRequest = team.joinRequests.some(request => request.user.toString() === userId);
+    if (hasPendingRequest) {
+      return res.status(400).json({
+        success: false,
+        message: 'You already have a pending join request for this team'
+      });
+    }
+
+    // If team is public, add user directly
+    if (!team.isPrivate) {
+      // Add user to team
+      team.members.push({
+        user: userId,
+        role: 'member'
+      });
+
+      await team.save();
+
+      // Add team to user's teams
+      await User.findByIdAndUpdate(userId, {
+        $push: { teams: { team: team._id, role: 'member' } }
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Joined team successfully',
+        data: team
+      });
+    } else {
+      // For private teams, create a join request
+      team.joinRequests.push({
+        user: userId
+      });
+
+      await team.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Join request sent to team owner',
+        data: { requestPending: true }
+      });
+    }
+  } catch (error) {
+    console.error('Join team error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to join team',
+      error: error.message
+    });
+  }
+});
+
+// Get pending join requests for a team
+router.get('/teams/:teamId/requests', authenticateToken, async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const userId = req.user.userId;
+
+    const team = await Team.findById(teamId)
+      .populate('joinRequests.user', 'username profile.firstName profile.lastName profile.avatar');
+
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: 'Team not found'
+      });
+    }
+
+    // Check if user is the team owner or admin
+    const userMember = team.members.find(member => member.user.toString() === userId);
+    if (!userMember || (userMember.role !== 'owner' && userMember.role !== 'admin')) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to view join requests'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: team.joinRequests
+    });
+  } catch (error) {
+    console.error('Get join requests error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get join requests',
+      error: error.message
+    });
+  }
+});
+
+// Accept a join request
+router.put('/teams/:teamId/requests/:userId/accept', authenticateToken, async (req, res) => {
+  try {
+    const { teamId, userId } = req.params;
+    const requestingUserId = req.user.userId;
+
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: 'Team not found'
+      });
+    }
+
+    // Check if user is the team owner or admin
+    const userMember = team.members.find(member => member.user.toString() === requestingUserId);
+    if (!userMember || (userMember.role !== 'owner' && userMember.role !== 'admin')) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to accept join requests'
+      });
+    }
+
+    // Find the join request
+    const requestIndex = team.joinRequests.findIndex(request => request.user.toString() === userId);
+    if (requestIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Join request not found'
+      });
+    }
+
+    // Remove the request from joinRequests
+    const request = team.joinRequests.splice(requestIndex, 1)[0];
+
+    // Add user to team members
     team.members.push({
       user: userId,
-      role: 'member'
+      role: 'member',
+      joinedAt: Date.now()
     });
 
     await team.save();
@@ -216,14 +344,63 @@ router.post('/teams/join', authenticateToken, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Joined team successfully',
+      message: 'Join request accepted',
       data: team
     });
   } catch (error) {
-    console.error('Join team error:', error);
+    console.error('Accept join request error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to join team',
+      message: 'Failed to accept join request',
+      error: error.message
+    });
+  }
+});
+
+// Reject a join request
+router.put('/teams/:teamId/requests/:userId/reject', authenticateToken, async (req, res) => {
+  try {
+    const { teamId, userId } = req.params;
+    const requestingUserId = req.user.userId;
+
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: 'Team not found'
+      });
+    }
+
+    // Check if user is the team owner or admin
+    const userMember = team.members.find(member => member.user.toString() === requestingUserId);
+    if (!userMember || (userMember.role !== 'owner' && userMember.role !== 'admin')) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to reject join requests'
+      });
+    }
+
+    // Find and remove the join request
+    const requestIndex = team.joinRequests.findIndex(request => request.user.toString() === userId);
+    if (requestIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Join request not found'
+      });
+    }
+
+    team.joinRequests.splice(requestIndex, 1);
+    await team.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Join request rejected'
+    });
+  } catch (error) {
+    console.error('Reject join request error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reject join request',
       error: error.message
     });
   }

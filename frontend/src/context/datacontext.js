@@ -291,14 +291,85 @@ export const DataProvider = ({ children }) => {
       if (response.ok) {
         // Fetch all teams to ensure we have the latest data
         fetchTeams();
-        console.log('✅ Joined team successfully');
-        return true;
+        console.log('✅ Join request processed successfully');
+        return data;
       } else {
         console.error('❌ Failed to join team:', data.message);
         return false;
       }
     } catch (error) {
       console.error('❌ Error joining team:', error);
+      return false;
+    }
+  };
+
+  const getTeamJoinRequests = async (teamId) => {
+    try {
+      console.log('📥 Fetching team join requests...');
+      const response = await fetchWithTokenRefresh(`http://localhost:3001/api/teams/${teamId}/requests`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        console.log('✅ Team join requests fetched successfully');
+        return data.data;
+      } else {
+        console.error('❌ Failed to fetch team join requests:', data.message);
+        return [];
+      }
+    } catch (error) {
+      console.error('❌ Error fetching team join requests:', error);
+      return [];
+    }
+  };
+
+  const acceptJoinRequest = async (teamId, userId) => {
+    try {
+      console.log('✅ Accepting team join request...');
+      const response = await fetchWithTokenRefresh(`http://localhost:3001/api/teams/${teamId}/requests/${userId}/accept`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        console.log('✅ Team join request accepted successfully');
+        return true;
+      } else {
+        console.error('❌ Failed to accept team join request:', data.message);
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Error accepting team join request:', error);
+      return false;
+    }
+  };
+
+  const rejectJoinRequest = async (teamId, userId) => {
+    try {
+      console.log('❌ Rejecting team join request...');
+      const response = await fetchWithTokenRefresh(`http://localhost:3001/api/teams/${teamId}/requests/${userId}/reject`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        console.log('✅ Team join request rejected successfully');
+        return true;
+      } else {
+        console.error('❌ Failed to reject team join request:', data.message);
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Error rejecting team join request:', error);
       return false;
     }
   };
@@ -439,8 +510,11 @@ useEffect(() => {
         teams,
         fetchTeams,
         createTeam,
-        joinTeam,  // Add this line
+        joinTeam,
         addProblemToTeam,
+        getTeamJoinRequests,
+        acceptJoinRequest,
+        rejectJoinRequest,
         friends,
         fetchFriends,
         addFriend,

@@ -30,6 +30,16 @@ const teamSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
+  joinRequests: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    requestedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   problems: [{
     problem: {
       type: mongoose.Schema.Types.ObjectId,
