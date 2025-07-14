@@ -276,6 +276,33 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  const joinTeam = async (inviteCode) => {
+    try {
+      console.log('🔗 Joining team with invite code...');
+      const response = await fetchWithTokenRefresh('http://localhost:3001/api/teams/join', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ inviteCode }),
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        // Fetch all teams to ensure we have the latest data
+        fetchTeams();
+        console.log('✅ Joined team successfully');
+        return true;
+      } else {
+        console.error('❌ Failed to join team:', data.message);
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Error joining team:', error);
+      return false;
+    }
+  };
+
   // Friend functions with enhanced error handling
   const fetchFriends = async () => {
     try {
@@ -384,15 +411,18 @@ export const DataProvider = ({ children }) => {
   };
 
   // Load teams and friends on initial render if user is logged in
-  useEffect(() => {
-    if (user) {
-      console.log('👤 User logged in, fetching user data...');
-      fetchTeams();
-      fetchFriends();
-      fetchUserSubmissions();
-    }
-  }, [user]);
+useEffect(() => {
+    const fetchAllUserData = () => {
+      if (user) {
+        console.log('👤 User logged in, fetching user data...');
+        fetchTeams();
+        fetchFriends();
+        fetchUserSubmissions();
+      }
+    };
 
+    fetchAllUserData();
+  }, []);
   return (
     <DataContext.Provider 
       value={{ 
@@ -409,14 +439,15 @@ export const DataProvider = ({ children }) => {
         teams,
         fetchTeams,
         createTeam,
+        joinTeam,  // Add this line
         addProblemToTeam,
         friends,
         fetchFriends,
         addFriend,
         acceptFriendRequest,
         submissions,
-        addSubmission,
-        fetchUserSubmissions
+        addSubmission
+        // fetchUserSubmissions
       }}
     >
       {children}

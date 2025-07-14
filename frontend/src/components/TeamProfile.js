@@ -61,14 +61,14 @@ const TeamProfile = () => {
   };
   
   if (loading) {
-    return <div className="loading">Loading team profile...</div>;
+    return <div className="tp_loading">Loading team profile...</div>;
   }
   
   if (error) {
     return (
-      <div className="error-container">
-        <div className="error-message">{error}</div>
-        <Link to="/teams" className="back-link">
+      <div className="tp_error-container">
+        <div className="tp_error-message">{error}</div>
+        <Link to="/teams" className="tp_back-link">
           <ArrowLeft size={16} /> Back to Teams
         </Link>
       </div>
@@ -77,9 +77,9 @@ const TeamProfile = () => {
   
   if (!team) {
     return (
-      <div className="not-found-container">
-        <div className="not-found-message">Team not found</div>
-        <Link to="/teams" className="back-link">
+      <div className="tp_not-found-container">
+        <div className="tp_not-found-message">Team not found</div>
+        <Link to="/teams" className="tp_back-link">
           <ArrowLeft size={16} /> Back to Teams
         </Link>
       </div>
@@ -89,67 +89,69 @@ const TeamProfile = () => {
   const userRole = getUserRole();
   
   return (
-    <div className="team-profile-container">
-      <div className="team-profile-header">
-        <Link to="/teams" className="back-link">
+    <div className="tp_team-profile-container">
+      <div className="tp_team-profile-header">
+        <Link to="/teams" className="tp_back-link">
           <ArrowLeft size={16} /> Back to Teams
         </Link>
-        <div className="team-info">
-          <h1>{team.name}</h1>
-          <p className="team-description">{team.description || 'No description'}</p>
-          <div className="team-meta">
-            <span className="team-privacy">{team.isPrivate ? 'Private' : 'Public'} Team</span>
-            <span className="team-created">Created on {formatDate(team.createdAt)}</span>
-            <span className="team-members"><Users size={14} /> {team.members.length} members</span>
+        <div className="tp_team-info">
+          <h1 className="tp_team-name">{team.name}</h1>
+          <p className="tp_team-description">{team.description || 'No description'}</p>
+          <div className="tp_team-meta">
+            <span className={`tp_team-privacy ${team.isPrivate ? 'tp_private' : 'tp_public'}`}>
+              {team.isPrivate ? 'Private' : 'Public'} Team
+            </span>
+            <span className="tp_team-created">Created on {formatDate(team.createdAt)}</span>
+            <span className="tp_team-members"><Users size={14} /> {team.members.length} members</span>
           </div>
         </div>
       </div>
       
-      <div className="team-content">
-        <div className="team-sidebar">
-          <div className="sidebar-section">
+      <div className="tp_team-content">
+        <div className="tp_team-sidebar">
+          <div className="tp_sidebar-section">
             <h3>Team Owner</h3>
-            <div className="member-item owner">
-              <div className="member-avatar">
+            <div className="tp_member-item tp_owner">
+              <div className="tp_member-avatar">
                 {team.owner.profile.avatar ? (
                   <img src={team.owner.profile.avatar} alt={team.owner.username} />
                 ) : (
-                  <div className="avatar-placeholder">
+                  <div className="tp_avatar-placeholder">
                     {team.owner.username.charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
-              <div className="member-info">
-                <span className="member-name">
+              <div className="tp_member-info">
+                <span className="tp_member-name">
                   {team.owner.profile.firstName} {team.owner.profile.lastName}
                 </span>
-                <span className="member-username">@{team.owner.username}</span>
+                <span className="tp_member-username">@{team.owner.username}</span>
               </div>
             </div>
           </div>
           
-          <div className="sidebar-section">
+          <div className="tp_sidebar-section">
             <h3>Team Members</h3>
-            <div className="members-list">
+            <div className="tp_members-list">
               {team.members
                 .filter(member => member.user._id !== team.owner._id)
                 .map(member => (
-                  <div key={member.user._id} className="member-item">
-                    <div className="member-avatar">
+                  <div key={member.user._id} className="tp_member-item">
+                    <div className="tp_member-avatar">
                       {member.user.profile.avatar ? (
                         <img src={member.user.profile.avatar} alt={member.user.username} />
                       ) : (
-                        <div className="avatar-placeholder">
+                        <div className="tp_avatar-placeholder">
                           {member.user.username.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
-                    <div className="member-info">
-                      <span className="member-name">
+                    <div className="tp_member-info">
+                      <span className="tp_member-name">
                         {member.user.profile.firstName} {member.user.profile.lastName}
                       </span>
-                      <span className="member-username">@{member.user.username}</span>
-                      <span className="member-role">{member.role}</span>
+                      <span className="tp_member-username">@{member.user.username}</span>
+                      <span className="tp_member-role">{member.role}</span>
                     </div>
                   </div>
                 ))}
@@ -157,64 +159,64 @@ const TeamProfile = () => {
           </div>
         </div>
         
-        <div className="team-main-content">
-          <div className="tabs">
+        <div className="tp_team-main-content">
+          <div className="tp_team-tabs">
             <button 
-              className={`tab-btn ${activeTab === 'problems' ? 'active' : ''}`}
+              className={`tp_tab ${activeTab === 'problems' ? 'tp_active' : ''}`}
               onClick={() => setActiveTab('problems')}
             >
               Problems
             </button>
             <button 
-              className={`tab-btn ${activeTab === 'activity' ? 'active' : ''}`}
+              className={`tp_tab ${activeTab === 'activity' ? 'tp_active' : ''}`}
               onClick={() => setActiveTab('activity')}
             >
               Activity
             </button>
           </div>
           
-          <div className="tab-content">
+          <div className="tp_tab-content">
             {activeTab === 'problems' && (
-              <div className="problems-tab">
-                <div className="problems-header">
+              <div className="tp_problems-tab">
+                <div className="tp_problems-header">
                   <h2>Team Problems</h2>
                   {userRole && (
-                    <Link to={`/problem?addToTeam=${team._id}`} className="add-problem-btn">
+                    <Link to={`/problem?addToTeam=${team._id}`} className="tp_add-problem-btn">
                       <Plus size={16} /> Add Problem
                     </Link>
                   )}
                 </div>
                 
                 {team.problems.length === 0 ? (
-                  <div className="no-problems">
+                  <div className="tp_no-problems">
                     <p>No problems have been added to this team yet.</p>
                     {userRole && (
                       <p>Click the "Add Problem" button to add problems to this team.</p>
                     )}
                   </div>
                 ) : (
-                  <div className="problems-list">
+                  <div className="tp_problems-list">
                     {team.problems.map(({ problem, addedBy, addedAt, notes }) => (
-                      <div key={problem._id} className="problem-card">
-                        <div className="problem-info">
-                          <Link to={`/problem/${problem.id}`} className="problem-title">
+                      <div key={problem._id} className="tp_problem-card">
+                        <div className="tp_problem-info">
+                          <Link to={`/problem/${problem.id}`} className="tp_problem-title">
                             {problem.title}
                           </Link>
-                          <div className="problem-meta">
-                            <span className={`difficulty ${problem.difficulty.toLowerCase()}`}>
+                          <div className="tp_problem-meta">
+                            <span className={`tp_difficulty tp_${problem.difficulty.toLowerCase()}`}>
                               {problem.difficulty}
                             </span>
-                            <span className="added-by">
+                            <span className="tp_added-by">
                               Added by @{addedBy.username}
                             </span>
-                            <span className="added-at">
+                            <span className="tp_added-at">
                               <Clock size={14} /> {formatDate(addedAt)}
                             </span>
                           </div>
-                          {notes && <p className="problem-notes">{notes}</p>}
-                          <div className="problem-tags">
+                          {notes && <p className="tp_problem-notes">{notes}</p>}
+                          <div className="tp_problem-tags">
                             {problem.tags.map(tag => (
-                              <span key={tag} className="tag">
+                              <span key={tag} className="tp_tag">
                                 <Tag size={14} /> {tag}
                               </span>
                             ))}
@@ -228,17 +230,17 @@ const TeamProfile = () => {
             )}
             
             {activeTab === 'activity' && (
-              <div className="activity-tab">
+              <div className="tp_activity-tab">
                 <h2>Team Activity</h2>
-                <div className="activity-timeline">
+                <div className="tp_activity-timeline">
                   {/* Team creation activity */}
-                  <div className="activity-item">
-                    <div className="activity-icon create-icon"></div>
-                    <div className="activity-content">
-                      <p className="activity-text">
+                  <div className="tp_activity-item">
+                    <div className="tp_activity-icon tp_create-icon"></div>
+                    <div className="tp_activity-content">
+                      <p className="tp_activity-text">
                         <strong>{team.owner.username}</strong> created the team
                       </p>
-                      <p className="activity-time">
+                      <p className="tp_activity-time">
                         <Calendar size={14} /> {formatDate(team.createdAt)}
                       </p>
                     </div>
@@ -248,13 +250,13 @@ const TeamProfile = () => {
                   {team.members
                     .filter(member => member.user._id !== team.owner._id)
                     .map(member => (
-                      <div key={member.user._id} className="activity-item">
-                        <div className="activity-icon join-icon"></div>
-                        <div className="activity-content">
-                          <p className="activity-text">
+                      <div key={member.user._id} className="tp_activity-item">
+                        <div className="tp_activity-icon tp_join-icon"></div>
+                        <div className="tp_activity-content">
+                          <p className="tp_activity-text">
                             <strong>{member.user.username}</strong> joined the team
                           </p>
-                          <p className="activity-time">
+                          <p className="tp_activity-time">
                             <Calendar size={14} /> {formatDate(member.joinedAt)}
                           </p>
                         </div>
@@ -263,13 +265,13 @@ const TeamProfile = () => {
                   
                   {/* Problem addition activities */}
                   {team.problems.map(({ problem, addedBy, addedAt }) => (
-                    <div key={problem._id} className="activity-item">
-                      <div className="activity-icon problem-icon"></div>
-                      <div className="activity-content">
-                        <p className="activity-text">
+                    <div key={problem._id} className="tp_activity-item">
+                      <div className="tp_activity-icon tp_problem-icon"></div>
+                      <div className="tp_activity-content">
+                        <p className="tp_activity-text">
                           <strong>{addedBy.username}</strong> added problem <Link to={`/problem/${problem.id}`}>{problem.title}</Link>
                         </p>
-                        <p className="activity-time">
+                        <p className="tp_activity-time">
                           <Calendar size={14} /> {formatDate(addedAt)}
                         </p>
                       </div>

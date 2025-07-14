@@ -73,6 +73,7 @@ router.get('/teams', authenticateToken, async (req, res) => {
 // Get team by ID
 router.get('/teams/:teamId', authenticateToken, async (req, res) => {
   try {
+    console.log("hi");
     const { teamId } = req.params;
     const userId = req.user.userId;
 
@@ -80,7 +81,7 @@ router.get('/teams/:teamId', authenticateToken, async (req, res) => {
       .populate('members.user', 'username profile.firstName profile.lastName profile.avatar')
       .populate('problems.problem')
       .populate('problems.addedBy', 'username');
-
+    console.log(team);
     if (!team) {
       return res.status(404).json({
         success: false,

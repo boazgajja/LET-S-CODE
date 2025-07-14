@@ -203,7 +203,7 @@ const AddProblem = () => {
         </div>
         
         {/* Update all other form-group classes to ap_form-group */}
-        <div className="form-group">
+        <div className="ap_form-group">
           <label htmlFor="difficulty">Difficulty</label>
           <select 
             id="difficulty" 
@@ -218,7 +218,7 @@ const AddProblem = () => {
           </select>
         </div>
         
-        <div className="form-group">
+        <div className="ap_form-group">
           <label htmlFor="description">Description</label>
           <textarea 
             id="description" 
@@ -229,7 +229,7 @@ const AddProblem = () => {
           />
         </div>
         
-        <div className="form-group">
+        <div className="ap_form-group">
           <label htmlFor="inputFormat">Input Format</label>
           <textarea 
             id="inputFormat" 
@@ -240,7 +240,7 @@ const AddProblem = () => {
           />
         </div>
         
-        <div className="form-group">
+        <div className="ap_form-group">
           <label htmlFor="outputFormat">Output Format</label>
           <textarea 
             id="outputFormat" 
@@ -251,7 +251,7 @@ const AddProblem = () => {
           />
         </div>
         
-        <div className="form-group">
+        <div className="ap_form-group">
           <label htmlFor="constraints">Constraints (one per line)</label>
           <textarea 
             id="constraints" 
@@ -262,7 +262,7 @@ const AddProblem = () => {
           />
         </div>
         
-        <div className="form-group">
+        <div className="ap_form-group">
           <label htmlFor="tags">Tags (comma separated)</label>
           <input 
             type="text" 
@@ -274,26 +274,26 @@ const AddProblem = () => {
           />
         </div>
         
-        <div className="form-section">
+        <div className="ap_form-section">
           <h3>Examples</h3>
           {problem.examples.map((example, index) => (
-            <div key={index} className="example-container">
+            <div key={index} className="ap_example-container">
               <h4>Example {index + 1}</h4>
-              <div className="form-group">
+              <div className="ap_form-group">
                 <label>Input</label>
                 <textarea 
                   value={example.input} 
                   onChange={(e) => handleNestedInputChange(e, index, 'examples', 'input')} 
                 />
               </div>
-              <div className="form-group">
+              <div className="ap_form-group">
                 <label>Output</label>
                 <textarea 
                   value={example.output} 
                   onChange={(e) => handleNestedInputChange(e, index, 'examples', 'output')} 
                 />
               </div>
-              <div className="form-group">
+              <div className="ap_form-group">
                 <label>Explanation</label>
                 <textarea 
                   value={example.explanation} 
@@ -303,7 +303,7 @@ const AddProblem = () => {
               {index > 0 && (
                 <button 
                   type="button" 
-                  className="remove-btn" 
+                  className="ap_remove-btn" 
                   onClick={() => removeExample(index)}
                 >
                   Remove Example
@@ -313,26 +313,26 @@ const AddProblem = () => {
           ))}
           <button 
             type="button" 
-            className="add-btn" 
+            className="ap_add-btn" 
             onClick={addExample}
           >
             Add Example
           </button>
         </div>
         
-        <div className="form-section">
+        <div className="ap_form-section">
           <h3>Test Cases</h3>
           {problem.testCases.map((testCase, index) => (
-            <div key={index} className="test-case-container">
+            <div key={index} className="ap_test-case-container">
               <h4>Test Case {index + 1}</h4>
-              <div className="form-group">
+              <div className="ap_form-group">
                 <label>Input</label>
                 <textarea 
                   value={testCase.input} 
                   onChange={(e) => handleNestedInputChange(e, index, 'testCases', 'input')} 
                 />
               </div>
-              <div className="form-group">
+              <div className="ap_form-group">
                 <label>Output</label>
                 <textarea 
                   value={testCase.output} 
@@ -342,7 +342,7 @@ const AddProblem = () => {
               {index > 0 && (
                 <button 
                   type="button" 
-                  className="remove-btn" 
+                  className="ap_remove-btn" 
                   onClick={() => removeTestCase(index)}
                 >
                   Remove Test Case
@@ -352,16 +352,16 @@ const AddProblem = () => {
           ))}
           <button 
             type="button" 
-            className="add-btn" 
+            className="ap_add-btn" 
             onClick={addTestCase}
           >
             Add Test Case
           </button>
         </div>
         
-        <div className="form-section">
+        <div className="ap_form-section">
           <h3>Solution Hints</h3>
-          <div className="form-group">
+          <div className="ap_form-group">
             <label htmlFor="hint1">Hint 1</label>
             <textarea 
               id="hint1" 
@@ -369,7 +369,7 @@ const AddProblem = () => {
               onChange={(e) => handleSolutionChange(e, 'hint1')} 
             />
           </div>
-          <div className="form-group">
+          <div className="ap_form-group">
             <label htmlFor="hint2">Hint 2</label>
             <textarea 
               id="hint2" 
@@ -377,7 +377,7 @@ const AddProblem = () => {
               onChange={(e) => handleSolutionChange(e, 'hint2')} 
             />
           </div>
-          <div className="form-group">
+          <div className="ap_form-group">
             <label htmlFor="hint3">Hint 3</label>
             <textarea 
               id="hint3" 
@@ -388,7 +388,7 @@ const AddProblem = () => {
         </div>
         
         {teams.length > 0 && (
-          <div className="form-group">
+          <div className="ap_form-group">
             <label htmlFor="team">Add to Team (Optional)</label>
             <select 
               id="team" 
@@ -405,17 +405,17 @@ const AddProblem = () => {
           </div>
         )}
         
-        <div className="form-actions">
+        <div className="ap_form-actions">
           <button 
             type="button" 
-            className="cancel-btn" 
+            className="ap_cancel-btn" 
             onClick={() => navigate('/problem')}
           >
             Cancel
           </button>
           <button 
             type="submit" 
-            className="submit-btn" 
+            className="ap_submit-btn" 
             disabled={loading}
           >
             {loading ? 'Adding...' : 'Add Problem'}

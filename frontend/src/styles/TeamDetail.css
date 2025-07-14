@@ -1,209 +1,245 @@
-.team-detail-container {
+.td_team-detail-container {
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 3rem auto 0 auto; /* ⬅️ Top margin added */
   padding: 2rem;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+  border-radius: 8px;
 }
 
-.team-header {
+.td_team-header {
   margin-bottom: 2rem;
 }
 
-.team-header h1 {
+.td_team-header h1 {
   margin-bottom: 0.5rem;
+  color: #ffffff;
 }
 
-.team-description {
-  color: #666;
+.td_team-description {
+  color: #b0b0b0;
   margin-bottom: 1rem;
 }
 
-.team-meta {
+.td_team-meta {
   display: flex;
   gap: 1rem;
   font-size: 0.9rem;
-  color: #777;
+  color: #999;
   margin-bottom: 1rem;
 }
 
-.team-meta span.private {
-  color: #f44336;
+.td_team-meta span.td_private {
+  color: #ff6b6b;
 }
 
-.team-meta span.public {
-  color: #4caf50;
+.td_team-meta span.td_public {
+  color: #69db7c;
 }
 
-.team-actions {
+.td_team-actions {
   margin-top: 1rem;
 }
 
-.invite-btn {
+.td_invite-btn {
   padding: 0.5rem 1rem;
-  background-color: #2196f3;
+  background-color: #4263eb;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
+  transition: background-color 0.2s;
 }
 
-.team-tabs {
+.td_invite-btn:hover {
+  background-color: #364fc7;
+}
+
+.td_team-tabs {
   display: flex;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #333;
   margin-bottom: 1.5rem;
 }
 
-.tab-btn {
+.td_tab-btn {
   padding: 0.75rem 1.5rem;
   background: none;
   border: none;
   cursor: pointer;
   font-weight: bold;
-  color: #666;
+  color: #999;
   border-bottom: 3px solid transparent;
+  transition: all 0.2s;
 }
 
-.tab-btn.active {
-  color: #2196f3;
-  border-bottom-color: #2196f3;
+.td_tab-btn:hover {
+  color: #e0e0e0;
 }
 
-.tab-content {
+.td_tab-btn.td_active {
+  color: #4263eb;
+  border-bottom-color: #4263eb;
+}
+
+.td_tab-content {
   min-height: 400px;
 }
 
-.tab-header {
+.td_tab-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
 }
 
-.add-problem-btn {
+.td_add-problem-btn {
   padding: 0.5rem 1rem;
-  background-color: #4caf50;
+  background-color: #37b24d;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
+  transition: background-color 0.2s;
 }
 
-.add-problem-form {
-  background-color: #f5f5f5;
+.td_add-problem-btn:hover {
+  background-color: #2b9e3f;
+}
+
+.td_add-problem-form {
+  background-color: #252525;
   padding: 1.5rem;
   border-radius: 8px;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 1px solid #333;
 }
 
-.form-group {
+.td_form-group {
   margin-bottom: 1rem;
 }
 
-.form-group label {
+.td_form-group label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: bold;
+  color: #e0e0e0;
 }
 
-.form-group input,
-.form-group textarea {
+.td_form-group input,
+.td_form-group textarea {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #ddd;
+  border: 1px solid #444;
   border-radius: 4px;
+  background-color: #333;
+  color: #e0e0e0;
 }
 
-.form-group textarea {
+.td_form-group textarea {
   min-height: 100px;
 }
 
-.submit-btn {
+.td_submit-btn {
   padding: 0.5rem 1rem;
-  background-color: #2196f3;
+  background-color: #4263eb;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
+  transition: background-color 0.2s;
 }
 
-.problems-list {
+.td_submit-btn:hover {
+  background-color: #364fc7;
+}
+
+.td_problems-list {
   display: grid;
   gap: 1.5rem;
 }
 
-.problem-card {
-  background-color: white;
+.td_problem-card {
+  background-color: #252525;
   border-radius: 8px;
   padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 1px solid #333;
 }
 
-.problem-card h3 {
+.td_problem-card h3 {
   margin-top: 0;
   margin-bottom: 0.5rem;
-  color: #333;
+  color: #ffffff;
 }
 
-.problem-meta {
+.td_problem-meta {
   display: flex;
   gap: 1rem;
   font-size: 0.9rem;
-  color: #777;
+  color: #999;
   margin-bottom: 1rem;
 }
 
-.difficulty {
+.td_difficulty {
   font-weight: bold;
 }
 
-.difficulty.easy {
-  color: #4caf50;
+.td_difficulty.td_easy {
+  color: #69db7c;
 }
 
-.difficulty.medium {
-  color: #ff9800;
+.td_difficulty.td_medium {
+  color: #fcc419;
 }
 
-.difficulty.hard {
-  color: #f44336;
+.td_difficulty.td_hard {
+  color: #ff6b6b;
 }
 
-.problem-notes {
-  background-color: #f9f9f9;
+.td_problem-notes {
+  background-color: #333;
   padding: 1rem;
   border-radius: 4px;
   margin-bottom: 1rem;
+  color: #e0e0e0;
 }
 
-.solve-btn {
+.td_solve-btn {
   padding: 0.5rem 1rem;
-  background-color: #2196f3;
+  background-color: #4263eb;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
+  transition: background-color 0.2s;
 }
 
-.members-list {
+.td_solve-btn:hover {
+  background-color: #364fc7;
+}
+
+.td_members-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 1.5rem;
 }
 
-.member-card {
+.td_member-card {
   display: flex;
   align-items: center;
-  background-color: white;
+  background-color: #252525;
   border-radius: 8px;
   padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 1px solid #333;
 }
 
-.member-avatar {
+.td_member-avatar {
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -211,16 +247,16 @@
   margin-right: 1rem;
 }
 
-.member-avatar img {
+.td_member-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.avatar-placeholder {
+.td_avatar-placeholder {
   width: 100%;
   height: 100%;
-  background-color: #2196f3;
+  background-color: #4263eb;
   color: white;
   display: flex;
   align-items: center;
@@ -229,18 +265,19 @@
   font-size: 1.2rem;
 }
 
-.member-info h3 {
+.td_member-info h3 {
   margin: 0;
   font-size: 1rem;
+  color: #ffffff;
 }
 
-.member-info p {
+.td_member-info p {
   margin: 0.25rem 0;
-  color: #666;
+  color: #b0b0b0;
   font-size: 0.9rem;
 }
 
-.role {
+.td_role {
   display: inline-block;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -248,39 +285,68 @@
   margin-top: 0.5rem;
 }
 
-.role.owner {
-  background-color: #f44336;
+.td_role.td_owner {
+  background-color: #ff6b6b;
   color: white;
 }
 
-.role.admin {
-  background-color: #ff9800;
-  color: white;
+.td_role.td_admin {
+  background-color: #fcc419;
+  color: #333;
 }
 
-.role.member {
-  background-color: #4caf50;
-  color: white;
+.td_role.td_member {
+  background-color: #69db7c;
+  color: #333;
 }
 
-.loading,
-.error,
-.not-found {
+.td_loading,
+.td_error,
+.td_not-found {
   text-align: center;
   padding: 2rem;
-  background-color: #f5f5f5;
+  background-color: #252525;
   border-radius: 8px;
   margin-top: 2rem;
+  color: #e0e0e0;
+  border: 1px solid #333;
 }
 
-.error {
-  color: #f44336;
+.td_error {
+  color: #ff6b6b;
 }
 
-.no-problems {
+.td_no-problems {
   text-align: center;
   padding: 2rem;
-  background-color: #f5f5f5;
+  background-color: #252525;
   border-radius: 8px;
-  color: #666;
+  color: #b0b0b0;
+  border: 1px solid #333;
+}
+
+.td_problem-type-selector {
+  display: flex;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #333;
+}
+
+.td_type-btn {
+  padding: 0.5rem 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  color: #999;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.td_type-btn:hover {
+  color: #e0e0e0;
+}
+
+.td_type-btn.td_active {
+  color: #4263eb;
+  border-bottom: 2px solid #4263eb;
 }

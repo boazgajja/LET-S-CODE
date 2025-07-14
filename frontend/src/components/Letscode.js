@@ -8,7 +8,7 @@ import Navbar from './Navbar';
 
 export default function LetsCode() {
   const { theme } = useTheme();
-  const { user, workingProblems, addWorkingProblem, removeWorkingProblem, teams } = useDataContext();
+  const { user, workingProblems, addWorkingProblem, removeWorkingProblem, teams, fetchTeams } = useDataContext();
   
   const [selectedCategory, setSelectedCategory] = useState('All Topics');
   const [selectedTopics, setSelectedTopics] = useState([]);
@@ -40,7 +40,7 @@ export default function LetsCode() {
         setLoading(false);
       }
     };
-
+    fetchTeams();
     fetchProblems();
   }, []); // Remove workingProblems dependency
 
@@ -153,8 +153,8 @@ export default function LetsCode() {
                   <p className="lc-no-teams">No teams yet</p>
                 ) : (
                   teams.map((team) => (
-                    <Link key={team._id} to={`/team/${team._id}`} className="lc-team-item">
-                      <Users size={16} /> {team.name}
+                    <Link key={team._id} to={`/teams/${team.team._id}`} className="lc-team-item">
+                      <Users size={16} /> {team.team.name}
                     </Link>
                   ))
                 )}

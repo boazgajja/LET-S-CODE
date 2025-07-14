@@ -4,18 +4,22 @@ import { useDataContext } from '../context/datacontext';
 import '../styles/Teams.css';
 
 const Teams = () => {
-  const { user, teams, fetchTeams, createTeam } = useDataContext();
+  const { user, teams, fetchTeams, createTeam, joinTeam } = useDataContext();
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showJoinForm, setShowJoinForm] = useState(false);
   const [newTeam, setNewTeam] = useState({ name: '', description: '', isPrivate: true });
+  const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // console.log(teams);
     if (!user) {
       navigate('/');
       return;
     }
     
+    // Fetch teams when component mounts to ensure we have the latest data
     fetchTeams();
   }, [user, navigate]);
 
@@ -34,21 +38,51 @@ const Teams = () => {
   };
 
   const handleViewTeam = (teamId) => {
+    console.log(teams);
     navigate(`/teams/${teamId}`);
+  };
+
+  const handleJoinTeam = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    const result = await joinTeam(inviteCode);
+    
+    if (result) {
+      setInviteCode('');
+      setShowJoinForm(false);
+    }
+    
+    setLoading(false);
   };
 
   return (
     <div className="ct_teams-container">
       <div className="ct_teams-header">
         <h1>My Teams</h1>
-        <button 
-          className="ct_create-team-btn" 
-          onClick={() => setShowCreateForm(!showCreateForm)}
-        >
-          {showCreateForm ? 'Cancel' : 'Create Team'}
-        </button>
+        <div className="team-actions">
+          <button 
+            className="ct_create-team-btn" 
+            onClick={() => {
+              setShowCreateForm(!showCreateForm);
+              setShowJoinForm(false);
+            }}
+          >
+            {showCreateForm ? 'Cancel' : 'Create Team'}
+          </button>
+          <button 
+            className="ct_join-team-btn" 
+            onClick={() => {
+              setShowJoinForm(!showJoinForm);
+              setShowCreateForm(false);
+            }}
+          >
+            {showJoinForm ? 'Cancel' : 'Join Team'}
+          </button>
+        </div>
       </div>
       
+      {/* Create Team Form */}
       {showCreateForm && (
         <form className="ct_create-team-form" onSubmit={handleCreateTeam}>
           <div className="ct_form-group">
@@ -62,15 +96,14 @@ const Teams = () => {
             />
           </div>
           
-          {/* Update all other form-group classes to ct_form-group */}
-          <div className="form-group">
+          <div className="ct_form-group">
             <label>Description</label>
             <textarea 
               value={newTeam.description}
               onChange={(e) => setNewTeam({...newTeam, description: e.target.value})}
             />
           </div>
-          <div className="form-group checkbox">
+          <div className="ct_form-group checkbox">
             <label>
               <input 
                 type="checkbox" 
@@ -90,6 +123,29 @@ const Teams = () => {
         </form>
       )}
 
+      {/* Join Team Form */}
+      {showJoinForm && (
+        <form className="ct_join-team-form" onSubmit={handleJoinTeam}>
+          <div className="ct_form-group">
+            <label htmlFor="inviteCode">Invite Code</label>
+            <input
+              type="text"
+              id="inviteCode"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value)}
+              required
+            />
+          </div>
+          <button 
+            type="submit" 
+            className="submit-btn"
+            disabled={loading}
+          >
+            {loading ? 'Joining...' : 'Join Team'}
+          </button>
+        </form>
+      )}
+
       <div className="teams-list">
         {teams.length === 0 ? (
           <div className="no-teams">
@@ -97,14 +153,14 @@ const Teams = () => {
           </div>
         ) : (
           teams.map((team) => (
-            <div key={team._id} className="team-card" onClick={() => handleViewTeam(team._id)}>
-              <h3>{team.name}</h3>
-              <p>{team.description || 'No description'}</p>
+            <div key={team.team._id} className="team-card" onClick={() => handleViewTeam(team.team._id)}>
+              <h3>{team.team.name}</h3>
+              <p>{team.team.description || 'No description'}</p>
               <div className="team-meta">
-                <span>{team.members?.length || 0} members</span>
-                <span>{team.problems?.length || 0} problems</span>
-                <span className={team.isPrivate ? 'private' : 'public'}>
-                  {team.isPrivate ? 'Private' : 'Public'}
+                <span>{team.team.members?.length || 0} members</span>
+                <span>{team.team.problems?.length || 0} problems</span>
+                <span className={team.team.isPrivate ? 'private' : 'public'}>
+                  {team.team.isPrivate ? 'Private' : 'Public'}
                 </span>
               </div>
             </div>

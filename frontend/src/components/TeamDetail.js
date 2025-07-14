@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDataContext } from '../context/datacontext';
 import '../styles/TeamDetail.css';
+import axios from 'axios';
 
 const TeamDetail = () => {
   const { teamId } = useParams();
@@ -12,6 +13,7 @@ const TeamDetail = () => {
   const [activeTab, setActiveTab] = useState('problems');
   const [showAddProblemForm, setShowAddProblemForm] = useState(false);
   const [problemData, setProblemData] = useState({ problemId: '', notes: '' });
+  const [inviteCodeCopied, setInviteCodeCopied] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,7 +21,7 @@ const TeamDetail = () => {
       navigate('/');
       return;
     }
-    
+
     const fetchTeamDetails = async () => {
       try {
         setLoading(true);
@@ -28,11 +30,13 @@ const TeamDetail = () => {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },
         });
-        
+        console.log(teamId);
+        console.log(response);
+
         if (!response.ok) {
           throw new Error('Failed to fetch team details');
         }
-        
+
         const data = await response.json();
         setTeam(data.data);
       } catch (error) {
@@ -42,7 +46,7 @@ const TeamDetail = () => {
         setLoading(false);
       }
     };
-    
+
     fetchTeamDetails();
   }, [teamId, user, navigate]);
 
@@ -60,58 +64,67 @@ const TeamDetail = () => {
     }
   };
 
-  const copyInviteCode = () => {
+  const handleCopyInviteCode = () => {
     if (team?.inviteCode) {
       navigator.clipboard.writeText(team.inviteCode);
-      alert('Invite code copied to clipboard!');
+      setInviteCodeCopied(true);
+      setTimeout(() => setInviteCodeCopied(false), 2000);
     }
   };
 
-  if (loading) return <div className="loading">Loading team details...</div>;
-  if (error) return <div className="error">Error: {error}</div>;
-  if (!team) return <div className="not-found">Team not found</div>;
+  if (loading) {
+    return <div className="td_loading">Loading team details...</div>;
+  }
+
+  if (error) {
+    return <div className="td_error">{error}</div>;
+  }
+
+  if (!team) {
+    return <div className="td_not-found">Team not found</div>;
+  }
 
   return (
-    <div className="team-detail-container">
-      <div className="team-header">
+    <div className="td_team-detail-container">
+      <div className="td_team-header">
         <h1>{team.name}</h1>
-        <p className="team-description">{team.description}</p>
-        <div className="team-meta">
-          <span>{team.members?.length || 0} members</span>
-          <span>{team.problems?.length || 0} problems</span>
-          <span className={team.isPrivate ? 'private' : 'public'}>
-            {team.isPrivate ? 'Private' : 'Public'}
+        <p className="td_team-description">{team.description || 'No description'}</p>
+        <div className="td_team-meta">
+          <span className={team.isPrivate ? 'td_private' : 'td_public'}>
+            {team.isPrivate ? 'Private' : 'Public'} Team
           </span>
+          <span>Created: {new Date(team.createdAt).toLocaleDateString()}</span>
+          <span>Members: {team.members?.length || 0}</span>
         </div>
-        <div className="team-actions">
-          <button className="invite-btn" onClick={copyInviteCode}>
-            Copy Invite Code
+        <div className="td_team-actions">
+          <button className="td_invite-btn" onClick={handleCopyInviteCode}>
+            {inviteCodeCopied ? 'Copied!' : 'Copy Invite Code'}
           </button>
         </div>
       </div>
 
-      <div className="team-tabs">
-        <button 
-          className={`tab-btn ${activeTab === 'problems' ? 'active' : ''}`}
+      <div className="td_team-tabs">
+        <button
+          className={`td_tab-btn ${activeTab === 'problems' ? 'td_active' : ''}`}
           onClick={() => setActiveTab('problems')}
         >
           Problems
         </button>
-        <button 
-          className={`tab-btn ${activeTab === 'members' ? 'active' : ''}`}
+        <button
+          className={`td_tab-btn ${activeTab === 'members' ? 'td_active' : ''}`}
           onClick={() => setActiveTab('members')}
         >
           Members
         </button>
       </div>
 
-      <div className="tab-content">
+      <div className="td_tab-content">
         {activeTab === 'problems' && (
-          <div className="problems-tab">
-            <div className="tab-header">
+          <div className="td_problems-tab">
+            <div className="td_tab-header">
               <h2>Team Problems</h2>
-              <button 
-                className="add-problem-btn"
+              <button
+                className="td_add-problem-btn"
                 onClick={() => setShowAddProblemForm(!showAddProblemForm)}
               >
                 {showAddProblemForm ? 'Cancel' : 'Add Problem'}
@@ -119,57 +132,62 @@ const TeamDetail = () => {
             </div>
 
             {showAddProblemForm && (
-              <div className="add-problem-form">
+              <div className="td_add-problem-form">
                 <h3>Add Problem to Team</h3>
                 <form onSubmit={handleAddProblem}>
-                  <div className="form-group">
+                  <div className="td_form-group">
                     <label>Problem ID</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={problemData.problemId}
-                      onChange={(e) => setProblemData({...problemData, problemId: e.target.value})}
+                      onChange={(e) => setProblemData({ ...problemData, problemId: e.target.value })}
                       required
                     />
                   </div>
-                  <div className="form-group">
+                  <div className="td_form-group">
                     <label>Notes</label>
-                    <textarea 
+                    <textarea
                       value={problemData.notes}
-                      onChange={(e) => setProblemData({...problemData, notes: e.target.value})}
+                      onChange={(e) => setProblemData({ ...problemData, notes: e.target.value })}
                       placeholder="Add notes about this problem (optional)"
                     />
                   </div>
-                  <button type="submit" className="submit-btn">
+                  <button type="submit" className="td_submit-btn">
                     Add Problem
                   </button>
                 </form>
               </div>
             )}
 
-            <div className="problems-list">
+            <div className="td_problems-list">
               {team.problems?.length === 0 ? (
-                <div className="no-problems">
+                <div className="td_no-problems">
                   <p>No problems added to this team yet.</p>
                 </div>
               ) : (
                 team.problems?.map((problem) => (
-                  <div key={problem._id} className="problem-card">
+                  <div key={problem._id} className="td_problem-card">
                     <h3>{problem.problem.title}</h3>
-                    <div className="problem-meta">
-                      <span className={`difficulty ${problem.problem.difficulty.toLowerCase()}`}>
+                    <div className="td_problem-meta">
+                      <span className={`td_difficulty td_${problem.problem.difficulty?.toLowerCase()}`}>
                         {problem.problem.difficulty}
                       </span>
                       <span>Added by: {problem.addedBy.username}</span>
                       <span>Added: {new Date(problem.addedAt).toLocaleDateString()}</span>
                     </div>
                     {problem.notes && (
-                      <div className="problem-notes">
+                      <div className="td_problem-notes">
                         <p>{problem.notes}</p>
                       </div>
                     )}
-                    <button 
-                      className="solve-btn"
-                      onClick={() => navigate(`/problem/${problem.problem.id}`)}
+                    <button
+                      className="td_solve-btn"
+                      onClick={() =>{
+                        console.log(problem);
+navigate(`/problem/${problem.problem.id}`);
+
+
+                      } }
                     >
                       Solve Problem
                     </button>
@@ -181,24 +199,26 @@ const TeamDetail = () => {
         )}
 
         {activeTab === 'members' && (
-          <div className="members-tab">
+          <div className="td_members-tab">
             <h2>Team Members</h2>
-            <div className="members-list">
+            <div className="td_members-list">
               {team.members?.map((member) => (
-                <div key={member._id} className="member-card">
-                  <div className="member-avatar">
+                <div key={member._id} className="td_member-card">
+                  <div className="td_member-avatar">
                     {member.user.profile?.avatar ? (
                       <img src={member.user.profile.avatar} alt={member.user.username} />
                     ) : (
-                      <div className="avatar-placeholder">
+                      <div className="td_avatar-placeholder">
                         {member.user.username.charAt(0).toUpperCase()}
                       </div>
                     )}
                   </div>
-                  <div className="member-info">
-                    <h3>{member.user.profile?.firstName} {member.user.profile?.lastName}</h3>
+                  <div className="td_member-info">
+                    <h3>
+                      {member.user.profile?.firstName} {member.user.profile?.lastName}
+                    </h3>
                     <p>@{member.user.username}</p>
-                    <span className={`role ${member.role}`}>{member.role}</span>
+                    <span className={`td_role td_${member.role}`}>{member.role}</span>
                   </div>
                 </div>
               ))}

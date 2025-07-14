@@ -1,6 +1,7 @@
+// Remove unused imports
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Code2, ChevronRight, Users, Trophy, Brain, Mail, Lock, User, Eye, EyeOff, X } from 'lucide-react';
+import { Code2, ChevronRight, Users, Trophy, Brain } from 'lucide-react'; // Remove unused imports
 import '../styles/landing.css';
 import { useDataContext } from '../context/datacontext';
 
