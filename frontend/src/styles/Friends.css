@@ -1,0 +1,42 @@
+.friends-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.friends-header {
+  margin-bottom: 2rem;
+}
+
+.friend-code-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f5f5f5;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.my-friend-code {
+  display: flex;
+  align-items: center;
+}
+
+.my-friend-code p {
+  margin: 0;
+  margin-right: 1rem;
+}
+
+.copy-btn {
+  padding: 0.25rem 0.5rem;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.add-friend-form {
+  display: flex;
+}

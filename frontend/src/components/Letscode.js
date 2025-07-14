@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Code, Database, Shell, Zap, Brain, Trophy, Check, Sparkles, Plus } from 'lucide-react';
-import '../home.css';
+import { Search, Trophy, Sparkles, Plus, Users } from 'lucide-react';
+import '../styles/home.css';
+import { useTheme } from '../context/themeContext';
+import { useDataContext } from '../context/datacontext';
+import Navbar from './Navbar';
 
 export default function LetsCode() {
+  const { theme } = useTheme();
+  const { user, workingProblems, addWorkingProblem, removeWorkingProblem, teams } = useDataContext();
+  
   const [selectedCategory, setSelectedCategory] = useState('All Topics');
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -11,33 +17,19 @@ export default function LetsCode() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch problems from API
+  // Fetch problems only once when component mounts
   useEffect(() => {
     const fetchProblems = async () => {
       try {
         setLoading(true);
-        const response = await fetch('https://let-s-code.onrender.com/api/problemlist');
-        
+        const response = await fetch(process.env.REACT_APP_SERVER_LINK + '/problemlist');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-       const response_data = await response.json();
-console.log('API Response:', response_data);
-
-// Extract the problems array from the response
-let problemsArray;
-if (Array.isArray(response_data)) {
-  // If response is directly an array
-  problemsArray = response_data;
-} else if (response_data.data && Array.isArray(response_data.data)) {
-  // If response has a 'data' property containing the array
-  problemsArray = response_data.data;
-} else {
-  throw new Error(`Expected array or object with data property, but received: ${JSON.stringify(response_data)}`);
-}
-
-        console.log('Problems array:', problemsArray);
-        console.log('Array length:', problemsArray.length);
+        const response_data = await response.json();
+        let problemsArray = Array.isArray(response_data)
+          ? response_data
+          : response_data.data || [];
 
         setProblems(problemsArray);
         setError(null);
@@ -50,43 +42,78 @@ if (Array.isArray(response_data)) {
     };
 
     fetchProblems();
-  }, []);
+  }, []); // Remove workingProblems dependency
 
-  // Calculate topic counts dynamically based on fetched problems
+  // Memoize the function to check if a problem is marked
+  const isProblemMarked = useCallback((problemId) => {
+    return workingProblems.some(p => p._id === problemId);
+  }, [workingProblems]);
+
+  // Memoize the marked problems count
+  const markedCount = React.useMemo(() => {
+    return problems.filter(problem => isProblemMarked(problem.id)).length;
+  }, [problems, isProblemMarked]);
+
+  // Memoize the filtered problems with marked status
+  const filteredProblems = React.useMemo(() => {
+    return problems.filter(problem => {
+      const matchesSearch = problem.title?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesTopics = selectedTopics.length === 0 || selectedTopics.some(topic => problem.tags?.includes(topic));
+      return matchesSearch && matchesTopics;
+    }).map(problem => ({
+      ...problem,
+      isMarked: isProblemMarked(problem.id)
+    }));
+  }, [problems, searchTerm, selectedTopics, isProblemMarked]);
+
+  const getUserInitial = () => {
+    return user?.name?.charAt(0).toUpperCase() || 'A';
+  };
+
   const topicCounts = problems.length > 0 ? {
-    'Array': problems.filter(p => p.tags && p.tags.includes('Array')).length,
-    'String': problems.filter(p => p.tags && p.tags.includes('String')).length,
-    'Hash Table': problems.filter(p => p.tags && p.tags.includes('Hash Table')).length,
-    'Dynamic Programming': problems.filter(p => p.tags && p.tags.includes('Dynamic Programming')).length,
-    'Math': problems.filter(p => p.tags && p.tags.includes('Math')).length,
-    'Linked List': problems.filter(p => p.tags && p.tags.includes('Linked List')).length,
-    'Two Pointers': problems.filter(p => p.tags && p.tags.includes('Two Pointers')).length,
-    'Binary Search': problems.filter(p => p.tags && p.tags.includes('Binary Search')).length,
+    'Array': problems.filter(p => p.tags?.includes('Array')).length,
+    'String': problems.filter(p => p.tags?.includes('String')).length,
+    'Hash Table': problems.filter(p => p.tags?.includes('Hash Table')).length,
+    'Dynamic Programming': problems.filter(p => p.tags?.includes('Dynamic Programming')).length,
+    'Math': problems.filter(p => p.tags?.includes('Math')).length,
+    'Linked List': problems.filter(p => p.tags?.includes('Linked List')).length,
+    'Two Pointers': problems.filter(p => p.tags?.includes('Two Pointers')).length,
+    'Binary Search': problems.filter(p => p.tags?.includes('Binary Search')).length,
   } : {};
 
-  // Function to toggle problem mark
-  const toggleProblemMark = (problemId) => {
-    setProblems(prevProblems => 
-      prevProblems.map(problem => 
-        problem.id === problemId 
-          ? { ...problem, isMarked: !problem.isMarked }
-          : problem
-      )
+  const toggleProblemMark = useCallback((problemId) => {
+    const problem = problems.find(p => p.id === problemId);
+    if (!problem) return;
+
+    const isMarked = isProblemMarked(problemId);
+
+    if (isMarked) {
+      removeWorkingProblem(problemId);
+    } else {
+      addWorkingProblem({
+        _id: problem.id,
+        id: problem.id,
+        title: problem.title,
+        difficulty: problem.difficulty,
+        status: 'working'
+      });
+    }
+
+    // No need to update local state since we're using memoized values
+    // The component will re-render automatically when workingProblems changes
+    return false;
+  }, [problems, isProblemMarked, addWorkingProblem, removeWorkingProblem]);
+
+  const toggleTopicFilter = (topic) => {
+    setSelectedTopics(prev =>
+      prev.includes(topic)
+        ? prev.filter(t => t !== topic)
+        : [...prev, topic]
     );
   };
 
-  const toggleTopicFilter = (topic) => {
-    setSelectedTopics(prev => {
-      if (prev.includes(topic)) {
-        return prev.filter(t => t !== topic);
-      } else {
-        return [...prev, topic];
-      }
-    });
-  };
-
   const getDifficultyConfig = (difficulty) => {
-    switch(difficulty) {
+    switch (difficulty) {
       case 'Easy': return { class: 'difficulty-easy' };
       case 'Medium': return { class: 'difficulty-medium' };
       case 'Hard': return { class: 'difficulty-hard' };
@@ -94,143 +121,87 @@ if (Array.isArray(response_data)) {
     }
   };
 
-  const filteredProblems = problems.filter(problem => {
-    const matchesSearch = problem.title && problem.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTopics = selectedTopics.length === 0 || (problem.tags && selectedTopics.some(topic => problem.tags.includes(topic)));
-    return matchesSearch && matchesTopics;
-  });
-
-  const workingProblems = problems.filter(p => p.isMarked && !p.solved);
-  const markedCount = problems.filter(p => p.isMarked).length;
-
-  // Loading state
   if (loading) {
-    return (
-      <div className="app-container">
-        <div className="loading-container" style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          fontSize: '18px'
-        }}>
-          Loading problems...
-        </div>
-      </div>
-    );
+    return <div className="lc_loading-container">Loading problems...</div>;
   }
 
-  // Error state
   if (error) {
     return (
-      <div className="app-container">
-        <div className="error-container" style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          fontSize: '18px',
-          color: 'red'
-        }}>
-          <p>Error loading problems: {error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            style={{
-              marginTop: '10px',
-              padding: '10px 20px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}
-          >
-            Retry
-          </button>
-        </div>
+      <div className="lc_error-container">
+        <p>Error loading problems: {error}</p>
+        <button onClick={() => window.location.reload()}>Retry</button>
       </div>
     );
   }
 
   return (
-    <div className="app-container">
-      {/* Navigation */}
-      <nav className="navbar">
-        <div className="nav-content">
-          <div className="nav-flex">
-            <div className="nav-left">
-              <div className="logo-section">
-                <div className="logo-icon">
-                  <Code className="logo-code-icon" />
-                </div>
-                <span className="logo-text">
-                  LET'S CODE
-                </span>
-              </div>
-              <div className="nav-links">
-                <button className="nav-link nav-link-active">
-                  Problems
-                </button>
-                <button className="nav-link nav-link-add">
-                  <Plus className="plus-icon" />
-                  <span>Add Problem</span>
-                </button>
+    <div className={`lc-app-container ${theme}`}>
+      <Navbar />
+
+      <div className="lc-main-layout">
+        {/* Sidebar */}
+        <div className="lc-sidebar hide-scrollbar">
+          <div className="lc-sidebar-content">
+            {/* My Teams Section */}
+            <div className="lc-sidebar-section">
+              <h3 className="lc-sidebar-title">
+                <Users className="lc-teams-icon" />
+                <span>My Teams</span>
+              </h3>
+              <div className="lc-teams-list">
+                {teams.length === 0 ? (
+                  <p className="lc-no-teams">No teams yet</p>
+                ) : (
+                  teams.map((team) => (
+                    <Link key={team._id} to={`/team/${team._id}`} className="lc-team-item">
+                      <Users size={16} /> {team.name}
+                    </Link>
+                  ))
+                )}
+                <Link to="/teams" className="lc-add-team-link">
+                  <Plus size={16} /> Manage Teams
+                </Link>
               </div>
             </div>
-          </div>
-        </div>
-      </nav>
 
-      <div className="main-layout">
-        {/* Sidebar */}
-        <div className="sidebar">
-          <div className="sidebar-content">
             <div>
-              <h3 className="sidebar-title">
-                <Trophy className="trophy-icon" />
+              <h3 className="lc-sidebar-title">
+                <Trophy className="lc-trophy-icon" />
                 <span>Working Problems</span>
               </h3>
-              <div className="working-problems-list">
+              <div className="lc-working-problems-list">
                 {workingProblems.map(problem => {
                   const diffConfig = getDifficultyConfig(problem.difficulty);
                   return (
-                   <>
-                    <Link key={problem.id} to={`/problem/${problem.id}`} className="working-problem-link">
-                      <div className="working-problem-card">
+                    <Link key={problem._id} to={`/problem/${problem._id}`} className="lc-working-problem-link">
+                      <div className="lc-working-problem-card">
                         <div className="working-problem-header">
                           <div className="working-problem-info">
                             <div className="working-indicator"></div>
-                            <span className="working-problem-title">{problem.id}. {problem.title}</span>
+                            <span>{problem._id}. {problem.title}</span>
                           </div>
                         </div>
                         <div className="working-problem-footer">
-                          <span className={`difficulty-badge ${diffConfig.class}`}>
-                            {problem.difficulty}
-                          </span>
-                          <span className="acceptance-rate">{problem.acceptance}</span>
+                          <span className={`difficulty-badge ${diffConfig.class}`}>{problem.difficulty}</span>
+                          <span>{problem.acceptance}</span>
                         </div>
                       </div>
                     </Link>
-                    </>
                   );
                 })}
-                {workingProblems.length === 0 && (
-                  <p className="no-working-problems">No problems currently being worked on</p>
-                )}
+                {workingProblems.length === 0 && <p className="lc-no-working-problems">No problems currently being worked on</p>}
               </div>
             </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="main-content">
+        <div className="lc-main-content">
           <div className="content-header">
-            {/* Topic Tags */}
             <div className="topic-tags">
               {Object.entries(topicCounts).map(([topic, count]) => (
-                <button 
-                  key={topic} 
+                <button
+                  key={topic}
                   onClick={() => toggleTopicFilter(topic)}
                   className={`topic-tag ${selectedTopics.includes(topic) ? 'topic-tag-active' : ''}`}
                 >
@@ -240,7 +211,6 @@ if (Array.isArray(response_data)) {
               ))}
             </div>
 
-            {/* Search and Controls */}
             <div className="search-controls">
               <div className="search-section">
                 <div className="search-input-container">
@@ -257,88 +227,62 @@ if (Array.isArray(response_data)) {
               <div className="controls-section">
                 <div className="progress-count">
                   <Sparkles className="sparkles-icon" />
-                  <span className="count-text">Progress: {markedCount}/{problems.length} marked</span>
+                  <span>Progress: {markedCount}/{problems.length} marked</span>
                 </div>
               </div>
             </div>
 
-            {/* Active Filters */}
             {selectedTopics.length > 0 && (
-              <div className="active-filters">
-                <div className="filter-info">
-                  <span className="filter-label">Filtered by:</span>
-                  {selectedTopics.map(topic => (
-                    <span key={topic} className="filter-tag">
-                      <span>{topic}</span>
-                      <button 
-                        onClick={() => toggleTopicFilter(topic)}
-                        className="filter-remove"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                  <button 
-                    onClick={() => setSelectedTopics([])}
-                    className="clear-filters"
-                  >
-                    Clear all
-                  </button>
-                </div>
+              <div className="lc-active-filters">
+                <span>Filtered by:</span>
+                {selectedTopics.map(topic => (
+                  <span key={topic} className="lc-filter-tag">
+                    {topic}
+                    <button onClick={() => toggleTopicFilter(topic)}>×</button>
+                  </span>
+                ))}
+                <button onClick={() => setSelectedTopics([])} className="lc-clear-filters">Clear all</button>
               </div>
             )}
           </div>
 
-          {/* Problems List */}
-          <div className="problems-list">
-            {filteredProblems.map((problem) => {
+          <div className="lc-problems-list">
+            {filteredProblems.map(problem => {
               const diffConfig = getDifficultyConfig(problem.difficulty);
               const isMarked = problem.isMarked;
               return (
-                <>
-                <Link key={problem.id} to={`/problem/${problem.id}`} className="problem-link">
-                  <div className="problem-card">
-                    <div className="problem-left">
+                <Link key={problem.id} to={`/problem/${problem.id}`} className="lc-problem-link">
+                  <div className="lc-problem-card">
+                    <div className="lc-problem-left">
                       <button
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           toggleProblemMark(problem.id);
+                          return false;
                         }}
-                        className={`problem-checkbox ${isMarked ? 'problem-checkbox-active' : ''}`}
+                        className={`lc-problem-checkbox ${isMarked ? 'lc-problem-checkbox-active' : ''}`}
                       >
-                        {isMarked && <div className="checkbox-dot"></div>}
+                        {isMarked && <div className="lc-checkbox-dot"></div>}
                       </button>
-                      <div className="problem-title-container">
-                        <span className="problem-title">{problem.id}. {problem.title}</span>
+                      <div className="lc-problem-title-container">
+                        <span className="lc-problem-title">{problem.id}. {problem.title}</span>
                       </div>
                     </div>
-                    <div className="problem-right">
-                      <div className="acceptance-info">
-                        <div className="acceptance-label">Acceptance</div>
-                        <div className="acceptance-value">{problem.acceptance}</div>
+                    <div className="lc-problem-right">
+                      <div className="lc-acceptance-info">
+                        <div className="lc-acceptance-label">Acceptance</div>
+                        <div className="lc-acceptance-value">{problem.acceptance}</div>
                       </div>
-                      <div className={`difficulty-badge ${diffConfig.class}`}>
-                        <span className="difficulty-text">
-                          {problem.difficulty}
-                        </span>
+                      <div className={`lc-difficulty-badge ${diffConfig.class}`}>
+                        {problem.difficulty}
                       </div>
                     </div>
                   </div>
                 </Link>
-                </>
               );
             })}
-            {filteredProblems.length === 0 && problems.length > 0 && (
-              <div className="no-problems" style={{
-                textAlign: 'center',
-                padding: '40px 20px',
-                color: '#666',
-                fontSize: '16px'
-              }}>
-                No problems match your current filters.
-              </div>
-            )}
+            {filteredProblems.length === 0 && <p className="lc-no-problems">No problems match your current filters.</p>}
           </div>
         </div>
       </div>

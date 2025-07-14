@@ -5,7 +5,7 @@ const ProblemList = require('./../models/problemlists'); // Adjust the path as n
 
 const getproblemlist = async () => {
   try {
-    await connectDB();
+    // await connectDB();
     const problems = await ProblemList.find({});
     // console.log(`Retrieved ${problems.length} problems`);
     // console.log(problems);
@@ -14,13 +14,13 @@ const getproblemlist = async () => {
     console.error('Error fetching all problems:', error.message);
     throw error;
   } finally {
-    await disconnectDB();
+    // await disconnectDB();
   }
 };
 
 const getAllProblems = async () => {
   try {
-    await connectDB();
+    // await connectDB();
     const problems = await Problem.find({});
     console.log(`Retrieved ${problems.length} problems`);
     console.log(problems);
@@ -29,7 +29,7 @@ const getAllProblems = async () => {
     console.error('Error fetching all problems:', error.message);
     throw error;
   } finally {
-    await disconnectDB();
+    // await disconnectDB();
   }
 };
 
@@ -38,7 +38,7 @@ const getAllProblems = async () => {
 // Modified function
 const getProblemById = async (problemId) => {
   try {
-    await connectDB();
+    // await connectDB();
     console.log('🔍 Fetching problem with ID:', problemId);
     const problem = await Problem.findOne({ id: problemId });
     console.log('🔍 Problem fetched:', problem ? problem.title : 'Not found');
@@ -58,7 +58,7 @@ const getProblemById = async (problemId) => {
 // Get problem by slug
 const getProblemBySlug = async (slug) => {
   try {
-    await connectDB();
+    // await connectDB();
     const problem = await Problem.findOne({ slug });
     if (problem) {
       console.log(`Retrieved problem: ${problem.title}`);
@@ -70,14 +70,14 @@ const getProblemBySlug = async (slug) => {
     console.error('Error fetching problem by slug:', error.message);
     throw error;
   } finally {
-    await disconnectDB();
+    // await disconnectDB();
   }
 };
 
 // Get problems by difficulty
 const getProblemsByDifficulty = async (difficulty) => {
   try {
-    await connectDB();
+    // await connectDB();
     const problems = await Problem.find({ difficulty });
     console.log(`Retrieved ${problems.length} problems with difficulty: ${difficulty}`);
     return problems;
@@ -85,14 +85,14 @@ const getProblemsByDifficulty = async (difficulty) => {
     console.error('Error fetching problems by difficulty:', error.message);
     throw error;
   } finally {
-    await disconnectDB();
+    // await disconnectDB();
   }
 };
 
 // Get problems with pagination
 const getProblemsWithPagination = async (page = 1, limit = 10) => {
   try {
-    await connectDB();
+    // await connectDB();
     const skip = (page - 1) * limit;
     const problems = await Problem.find({}).skip(skip).limit(limit);
     const total = await Problem.countDocuments();
@@ -113,7 +113,7 @@ const getProblemsWithPagination = async (page = 1, limit = 10) => {
     console.error('Error fetching problems with pagination:', error.message);
     throw error;
   } finally {
-    await disconnectDB();
+    // await disconnectDB();
   }
 };
 // getproblemlist();

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import CodeEditor from './editor';
-import { ArrowLeft, Code, Clock, Users, TrendingUp } from 'lucide-react';
-import './../problem.css';
+import { ArrowLeft, Code, Clock, Users, TrendingUp, Lightbulb, ChevronRight, Menu, X  } from 'lucide-react';
+import { useDataContext } from '../context/datacontext'; // Add this import
+import './../styles/problem.css';
 
 const languageMap = {
   javascript: 63,
@@ -58,16 +59,25 @@ public class Main {
 
 function Problem() {
   const { id } = useParams();
+  const { addSubmission } = useDataContext(); // Add this line
   const [problem, setProblem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('javascript');
-  const [inputHeight, setInputHeight] = useState(180);
+  const [inputHeight, setInputHeight] = useState(200);
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('-- Hit run to see the output --');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  const [currentHint, setCurrentHint] = useState(0);
+  const [showHints, setShowHints] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showLeftPanel, setShowLeftPanel] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const dragStartY = useRef(0);
+  const startHeight = useRef(0);
 
   // Initialize code template when language changes
   useEffect(() => {
@@ -79,7 +89,7 @@ function Problem() {
     const fetchProblem = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`https://let-s-code.onrender.com/api/problems/pid/${id}`);
+        const response = await fetch(process.env.REACT_APP_SERVER_LINK + `/problems/pid/${id}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -111,6 +121,17 @@ function Problem() {
     }
   }, [id]);
 
+  // Check for mobile view
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Prevent ResizeObserver error
   useEffect(() => {
     const handleError = (e) => {
@@ -123,24 +144,61 @@ function Problem() {
     return () => window.removeEventListener('error', handleError);
   }, []);
 
-  const startDrag = () => {
-    const onDrag = (e) => {
-      requestAnimationFrame(() => {
-        const newHeight = window.innerHeight - e.clientY - 100;
-        if (newHeight >= 100 && newHeight <= window.innerHeight * 0.6) {
-          setInputHeight(newHeight);
-        }
-      });
-    };
-
-    const stopDrag = () => {
-      window.removeEventListener('mousemove', onDrag);
-      window.removeEventListener('mouseup', stopDrag);
-    };
-
-    window.addEventListener('mousemove', onDrag);
-    window.addEventListener('mouseup', stopDrag);
+  // Drag functionality
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    dragStartY.current = e.clientY;
+    startHeight.current = inputHeight;
+    e.preventDefault();
   };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    
+    const deltaY = dragStartY.current - e.clientY;
+    const newHeight = Math.max(100, Math.min(500, startHeight.current + deltaY));
+    setInputHeight(newHeight);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e) => {
+    setIsDragging(true);
+    dragStartY.current = e.touches[0].clientY;
+    startHeight.current = inputHeight;
+    e.preventDefault();
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging) return;
+    
+    const touch = e.touches[0];
+    const deltaY = dragStartY.current - touch.clientY;
+    const newHeight = Math.max(100, Math.min(500, startHeight.current + deltaY));
+    setInputHeight(newHeight);
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove);
+      document.addEventListener('touchend', handleTouchEnd);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+      };
+    }
+  }, [isDragging]);
 
   const runCode = async () => {
     if (!code.trim()) {
@@ -151,7 +209,7 @@ function Problem() {
     setIsRunning(true);
     const options = {
       method: 'POST',
-      url: 'https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=false&wait=true',
+      url: process.env.REACT_APP_JUDGE_POST,
       headers: {
         'content-type': 'application/json',
         'X-RapidAPI-Key': '0ab6de0af9msh98d6f9c1bc68e73p155dafjsn99ea5a5188ab',
@@ -185,6 +243,9 @@ function Problem() {
   };
 
   const submitCode = async () => {
+    // Prevent multiple submissions
+    if (isSubmitting) return;
+    
     if (!problem || !problem.testCases) {
       setOutput('No test cases available');
       return;
@@ -206,95 +267,167 @@ function Problem() {
 
     let resultText = `\n=== SUBMISSION RESULTS ===\n`;
 
-    for (let i = 0; i < allTestCases.length; i++) {
-      const testCase = allTestCases[i];
-      const options = {
-        method: 'POST',
-        url: 'https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=false&wait=true',
-        headers: {
-          'content-type': 'application/json',
-          'X-RapidAPI-Key': '0ab6de0af9msh98d6f9c1bc68e73p155dafjsn99ea5a5188ab',
-          'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
-        },
-        data: {
-          source_code: code,
-          language_id: languageMap[language],
-          stdin: testCase.input
-        }
-      };
+    try {
+      for (let i = 0; i < allTestCases.length; i++) {
+        const testCase = allTestCases[i];
+        const options = {
+          method: 'POST',
+          url: process.env.REACT_APP_JUDGE_POST,
+          headers: {
+            'content-type': 'application/json',
+            'X-RapidAPI-Key': '0ab6de0af9msh98d6f9c1bc68e73p155dafjsn99ea5a5188ab',
+            'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
+          },
+          data: {
+            source_code: code,
+            language_id: languageMap[language],
+            stdin: testCase.input
+          }
+        };
 
-      try {
-        const res = await axios.request(options);
-        const actualOutput = (res.data.stdout || '').trim();
-        const expectedOutput = testCase.output.trim();
-        const passed = actualOutput === expectedOutput;
-        
-        if (!passed) {
+        try {
+          const res = await axios.request(options);
+          const actualOutput = (res.data.stdout || '').trim();
+          const expectedOutput = testCase.output.trim();
+          const passed = actualOutput === expectedOutput;
+          
+          if (!passed) {
+            allTestsPassed = false;
+          }
+
+          results.push({
+            testCase: i + 1,
+            input: testCase.input,
+            expected: expectedOutput,
+            actual: actualOutput,
+            passed: passed,
+            isHidden: i >= visibleTestCases.length,
+            error: res.data.stderr || res.data.compile_output
+          });
+
+        } catch (err) {
           allTestsPassed = false;
+          results.push({
+            testCase: i + 1,
+            input: testCase.input,
+            expected: testCase.output,
+            actual: 'Runtime Error',
+            passed: false,
+            isHidden: i >= visibleTestCases.length,
+            error: err.message
+          });
         }
+      }
 
-        results.push({
-          testCase: i + 1,
-          input: testCase.input,
-          expected: expectedOutput,
-          actual: actualOutput,
-          passed: passed,
-          isHidden: i >= visibleTestCases.length,
-          error: res.data.stderr || res.data.compile_output
-        });
-      } catch (err) {
-        allTestsPassed = false;
-        results.push({
-          testCase: i + 1,
-          input: testCase.input,
-          expected: testCase.output,
-          actual: 'Runtime Error',
-          passed: false,
-          isHidden: i >= visibleTestCases.length,
-          error: err.message
+      // Display results
+      const passedCount = results.filter(r => r.passed).length;
+      resultText += `Status: ${allTestsPassed ? '✅ ACCEPTED' : '❌ WRONG ANSWER'}\n`;
+      resultText += `Tests Passed: ${passedCount}/${results.length}\n\n`;
+
+      // Show visible test cases results
+      const visibleResults = results.slice(0, visibleTestCases.length);
+      if (visibleResults.length > 0) {
+        resultText += `📋 Visible Test Cases:\n`;
+        visibleResults.forEach(result => {
+          resultText += `Test ${result.testCase}: ${result.passed ? '✅ PASS' : '❌ FAIL'}\n`;
+          if (!result.passed) {
+            resultText += `  📥 Input: ${result.input}\n`;
+            resultText += `  📤 Expected: ${result.expected}\n`;
+            resultText += `  📤 Got: ${result.actual}\n`;
+            if (result.error) {
+              resultText += `  ⚠️ Error: ${result.error}\n`;
+            }
+          }
         });
       }
-    }
 
-    // Display results
-    const passedCount = results.filter(r => r.passed).length;
-    resultText += `Status: ${allTestsPassed ? '✅ ACCEPTED' : '❌ WRONG ANSWER'}\n`;
-    resultText += `Tests Passed: ${passedCount}/${results.length}\n\n`;
+      // Show hidden test cases results (only pass/fail)
+      const hiddenResults = results.slice(visibleTestCases.length);
+      if (hiddenResults.length > 0) {
+        resultText += `\n🔒 Hidden Test Cases:\n`;
+        hiddenResults.forEach((result, index) => {
+          resultText += `Hidden Test ${index + 1}: ${result.passed ? '✅ PASS' : '❌ FAIL'}\n`;
+        });
+      }
 
-    // Show visible test cases results
-    const visibleResults = results.slice(0, visibleTestCases.length);
-    if (visibleResults.length > 0) {
-      resultText += `📋 Visible Test Cases:\n`;
-      visibleResults.forEach(result => {
-        resultText += `Test ${result.testCase}: ${result.passed ? '✅ PASS' : '❌ FAIL'}\n`;
-        if (!result.passed) {
-          resultText += `  📥 Input: ${result.input}\n`;
-          resultText += `  📤 Expected: ${result.expected}\n`;
-          resultText += `  📤 Got: ${result.actual}\n`;
-          if (result.error) {
-            resultText += `  ⚠️ Error: ${result.error}\n`;
+      if (allTestsPassed) {
+        resultText += `\n🎉 Congratulations! All tests passed!`;
+        
+        // Save submission to database
+        if (problem && problem._id) {
+          try {
+            const response = await axios.post(`${process.env.REACT_APP_SERVER_LINK}/submissions`, {
+              userId: localStorage.getItem("userId"),
+              problemId: problem._id,
+              code,
+              status: "correct"
+            });
+            
+            // Add submission to context
+            if (response.data && response.data.success) {
+              addSubmission(response.data.data);
+            }
+            
+            console.log("Submission saved successfully");
+          } catch (err) {
+            console.error("Failed to save submission:", err.message);
           }
         }
-      });
-    }
+      } else {
+        resultText += `\n💡 Keep trying! Review the failed test cases above.`;
+        
+        // Save incorrect submission
+        if (problem && problem._id) {
+          try {
+            const response = await axios.post(`${process.env.REACT_APP_SERVER_LINK}/submissions`, {
+              userId: localStorage.getItem("userId"),
+              problemId: problem._id,
+              code,
+              status: "wrong"
+            });
+            
+            // Add submission to context
+            if (response.data && response.data.success) {
+              addSubmission(response.data.data);
+            }
+            
+            console.log("Submission saved successfully");
+          } catch (err) {
+            console.error("Failed to save submission:", err.message);
+          }
+        }
+      }
 
-    // Show hidden test cases results (only pass/fail)
-    const hiddenResults = results.slice(visibleTestCases.length);
-    if (hiddenResults.length > 0) {
-      resultText += `\n🔒 Hidden Test Cases:\n`;
-      hiddenResults.forEach((result, index) => {
-        resultText += `Hidden Test ${index + 1}: ${result.passed ? '✅ PASS' : '❌ FAIL'}\n`;
-      });
+      setOutput(resultText);
+    } catch (error) {
+      console.error('Submission error:', error);
+      setOutput('Error during submission: ' + error.message);
+    } finally {
+      setIsSubmitting(false);
     }
+  };
 
-    if (allTestsPassed) {
-      resultText += `\n🎉 Congratulations! All tests passed!`;
-    } else {
-      resultText += `\n💡 Keep trying! Review the failed test cases above.`;
+  const nextHint = () => {
+    if (!problem?.solution) return;
+    
+    const hints = [problem.solution.hint1, problem.solution.hint2, problem.solution.hint3].filter(Boolean);
+    if (currentHint < hints.length - 1) {
+      setCurrentHint(currentHint + 1);
     }
+  };
 
-    setOutput(resultText);
-    setIsSubmitting(false);
+  const getCurrentHints = () => {
+    if (!problem?.solution) return [];
+    
+    const hints = [problem.solution.hint1, problem.solution.hint2, problem.solution.hint3].filter(Boolean);
+    return hints.slice(0, currentHint + 1);
+  };
+
+  const hasMoreHints = () => {
+    if (!problem?.solution) return false;
+    
+    const hints = [problem.solution.hint1, problem.solution.hint2, problem.solution.hint3].filter(Boolean);
+    return currentHint < hints.length - 1;
   };
 
   const loadExample = (example) => {
@@ -303,18 +436,15 @@ function Problem() {
 
   if (loading) {
     return (
-      <div className="page-wrapper">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading problem...</p>
-        </div>
+      <div className="problem-container">
+        <div className="loading">Loading problem...</div>
       </div>
     );
   }
 
   if (error || !problem) {
     return (
-      <div className="page-wrapper">
+      <div className="problem-container">
         <div className="error-container">
           <p>Error loading problem: {error}</p>
           <Link to="/" className="back-link">
@@ -327,21 +457,29 @@ function Problem() {
   }
 
   return (
-    <div className="page-wrapper">
-      <header className="main-header">
-        <Link to="/" className="back-link">
+    <div className="problem-container">
+      <header className="header">
+        <Link to="/" className="back-btn">
           <ArrowLeft size={20} />
         </Link>
-        <div className="header-content">
+        <div className="header-title">
           <Code size={24} />
-          <h1>LET'S CODE</h1>
+          <span>LET'S CODE</span>
         </div>
+        {isMobile && (
+          <button 
+            className="mobile-toggle"
+            onClick={() => setShowLeftPanel(!showLeftPanel)}
+          >
+            {showLeftPanel ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        )}
       </header>
 
-      <div className="main-body">
-        <div className="left-section">
+      <div className="main-content">
+        <div className={`left-panel ${isMobile && showLeftPanel ? 'show' : ''}`}>
           <div className="problem-header">
-            <div className="problem-title">{problem.title}</div>
+            <h1 className="problem-title">{problem.title}</h1>
             <span className={`difficulty-badge ${problem.difficulty?.toLowerCase()}`}>
               {problem.difficulty}
             </span>
@@ -362,20 +500,20 @@ function Problem() {
             </div>
           </div>
 
-          <div className="description-section">
-            <div className="section-title">Description</div>
-            <div className="problem-desc">{problem.description}</div>
+          <div className="section">
+            <h2 className="section-title">Description</h2>
+            <p className="description">{problem.description}</p>
           </div>
 
           {problem.inputFormat && (
             <div className="format-section">
               <div className="format-item">
-                <div className="section-title">Input Format</div>
+                <h3 className="section-title">Input Format</h3>
                 <p>{problem.inputFormat}</p>
               </div>
               {problem.outputFormat && (
                 <div className="format-item">
-                  <div className="section-title">Output Format</div>
+                  <h3 className="section-title">Output Format</h3>
                   <p>{problem.outputFormat}</p>
                 </div>
               )}
@@ -383,76 +521,108 @@ function Problem() {
           )}
 
           {problem.examples && problem.examples.length > 0 && (
-            <div className="examples">
-              <div className="section-title">Examples</div>
-              {problem.examples.slice(0, 3).map((ex, i) => (
-                <div key={i} className="example-box">
+            <div className="section">
+              <h2 className="section-title">Examples</h2>
+              {problem.examples.slice(0, 3).map((example, index) => (
+                <div key={index} className="exampl-container">
                   <div className="example-header">
-                    <strong>Example {i + 1}</strong>
+                    <span className="example-title">Example {index + 1}</span>
                     <button 
-                      className="example-load-btn"
-                      onClick={() => loadExample(ex)}
-                      title="Load this example as input"
+                      className="load-btn"
+                      onClick={() => loadExample(example)}
                     >
                       Load
                     </button>
                   </div>
-                  <div className="example-section">
-                    <div className="example-label">Input:</div>
-                    <div className="example-content">{ex.input}</div>
-                  </div>
-                  <div className="example-section">
-                    <div className="example-label">Output:</div>
-                    <div className="example-content">{ex.output}</div>
-                  </div>
-                  {ex.explanation && (
-                    <div className="example-section">
-                      <div className="example-label">Explanation:</div>
-                      <div className="example-text">{ex.explanation}</div>
+                  <div className="example-content">
+                    <div className="example-row">
+                      <span className="example-label">Input:</span>
+                      <div className="example-value">{example.input}</div>
                     </div>
-                  )}
+                    <div className="example-row">
+                      <span className="example-label">Output:</span>
+                      <div className="example-value">{example.output}</div>
+                    </div>
+                    {example.explanation && (
+                      <div className="example-row">
+                        <span className="example-label">Explanation:</span>
+                        <div className="example-value">{example.explanation}</div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           )}
 
           {problem.constraints && problem.constraints.length > 0 && (
-            <div className="constraints">
-              <div className="section-title">Constraints</div>
-              <ul>
-                {problem.constraints.map((c, i) => (
-                  <li key={i}>{c}</li>
-                ))}
-              </ul>
+            <div className="section">
+              <h2 className="section-title">Constraints</h2>
+              <div className="constraints">
+                <ul>
+                  {problem.constraints.map((constraint, index) => (
+                    <li key={index}>{constraint}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
           )}
 
           {problem.tags && problem.tags.length > 0 && (
-            <div className="topics">
-              <div className="section-title">Tags</div>
-              <div>
-                {problem.tags.map((tag, i) => (
-                  <span key={i} className="topic-tag">{tag}</span>
+            <div className="section">
+              <h2 className="section-title">Tags</h2>
+              <div className="tags">
+                {problem.tags.map((tag, index) => (
+                  <span key={index} className="tag">{tag}</span>
                 ))}
               </div>
             </div>
           )}
 
           {problem.solution && (
-            <div className="hints">
-              <div className="section-title">Hints</div>
-              <div className="hint-list">
-                {problem.solution.hint1 && <div className="hint-item">💡 {problem.solution.hint1}</div>}
-                {problem.solution.hint2 && <div className="hint-item">💡 {problem.solution.hint2}</div>}
-                {problem.solution.hint3 && <div className="hint-item">💡 {problem.solution.hint3}</div>}
+            <div className="section">
+              <div className="hints-section">
+                <div className="hints-header">
+                  <h2 className="section-title">Hints</h2>
+                  <button 
+                    className="hints-toggle"
+                    onClick={() => setShowHints(!showHints)}
+                  >
+                    <Lightbulb size={16} />
+                    {showHints ? 'Hide Hints' : 'Show Hints'}
+                  </button>
+                </div>
+                {showHints && (
+                  <>
+                    {getCurrentHints().map((hint, index) => (
+                      <div key={index} className="hint-item">
+                        <Lightbulb size={16} />
+                        <span>{hint}</span>
+                      </div>
+                    ))}
+                    {hasMoreHints() && (
+                      <button 
+                        className="next-hint-btn"
+                        onClick={nextHint}
+                      >
+                        Next Hint
+                        <ChevronRight size={16} />
+                      </button>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           )}
         </div>
 
-        <div className="right-section">
-          <div className="editor-toolbar">
-            <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+        <div className="right-panel">
+          <div className="toolbar">
+            <select 
+              className="language-select"
+              value={language} 
+              onChange={(e) => setLanguage(e.target.value)}
+            >
               <option value="javascript">JavaScript</option>
               <option value="cpp">C++</option>
               <option value="python">Python</option>
@@ -460,14 +630,14 @@ function Problem() {
             </select>
             <div className="toolbar-buttons">
               <button 
-                className="btn run-btn" 
+                className="btn run-btn"
                 onClick={runCode}
                 disabled={isRunning}
               >
                 {isRunning ? 'Running...' : 'Run'}
               </button>
               <button 
-                className="btn submit-btn" 
+                className="btn submit-btn"
                 onClick={submitCode}
                 disabled={isSubmitting}
               >
@@ -476,24 +646,33 @@ function Problem() {
             </div>
           </div>
 
-          <div className="editor-area">
-            <CodeEditor language={language} value={code} onChange={setCode} />
+          <div className="editor-container">
+            <CodeEditor 
+              language={language}
+              value={code}
+              onChange={setCode}
+            />
           </div>
 
-          <div className="drag-separator" onMouseDown={startDrag} />
-          
+          <div 
+            className="drag-handle"
+            onMouseDown={handleMouseDown}
+            onTouchStart={handleTouchStart}
+          />
+
           <div className="input-output" style={{ height: inputHeight }}>
-            <div className="input-box">
-              <h4>Input</h4>
+            <div className="input-section">
+              <div className="section-header">Input</div>
               <textarea 
-                value={input} 
+                className="input-textarea"
+                value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Enter your test input here..."
               />
             </div>
-            <div className="output-box">
-              <h4>Output</h4>
-              <div className="output-text">{output}</div>
+            <div className="output-section">
+              <div className="section-header">Output</div>
+              <div className="output-content">{output}</div>
             </div>
           </div>
         </div>
@@ -501,5 +680,4 @@ function Problem() {
     </div>
   );
 }
-
 export default Problem;
