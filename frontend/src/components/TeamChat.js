@@ -19,13 +19,13 @@ const TeamChat = ({ teamId }) => {
         const headers = { Authorization: `Bearer ${token}` };
         
         // Fetch team details including members
-        const teamResponse = await axios.get(`http://localhost:3001/api/teams/${teamId}`, { headers });
+        const teamResponse = await axios.get(`${process.env.REACT_APP_SERVER_LINK}/teams/${teamId}`, { headers });
         if (teamResponse.data.success) {
           setTeamMembers(teamResponse.data.data.members);
         }
         
         // Fetch team messages
-        const messagesResponse = await axios.get(`http://localhost:3001/api/teams/${teamId}/messages`, { headers });
+        const messagesResponse = await axios.get(`${process.env.REACT_APP_SERVER_LINK}/teams/${teamId}/messages`, { headers });
         if (messagesResponse.data.success) {
           setMessages(messagesResponse.data.data);
         }
@@ -70,7 +70,7 @@ const TeamChat = ({ teamId }) => {
     const sendViaApi = async () => {
       try {
         const token = localStorage.getItem('token');
-        await axios.post(`http://localhost:3001/api/teams/${teamId}/messages`, {
+        await axios.post(`${process.env.REACT_APP_SERVER_LINK}/teams/${teamId}/messages`, {
           content: newMessage
         }, {
           headers: { Authorization: `Bearer ${token}` }

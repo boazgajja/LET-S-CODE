@@ -48,7 +48,7 @@ export const DataProvider = ({ children }) => {
         setWorkingProblems(updatedProblems);
         localStorage.setItem('workingProblems', JSON.stringify(updatedProblems));
         if (user) {
-          await fetchWithTokenRefresh('http://localhost:3001/api/users/working-problems', {
+          await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/users/working-problems`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ problemId: problem.id }),
@@ -58,24 +58,37 @@ export const DataProvider = ({ children }) => {
     } catch (error) {}
   };
 
-  const removeWorkingProblem = async (problemId) => {
-    try {
-      const updatedProblems = workingProblems.filter((p) => p.id !== problemId);
-      setWorkingProblems(updatedProblems);
-      localStorage.setItem('workingProblems', JSON.stringify(updatedProblems));
-      if (user) {
-        await fetchWithTokenRefresh(`http://localhost:3001/api/users/working-problems/${problemId}`, {
+ const removeWorkingProblem = async (problemId) => {
+  try {
+    // Find DB _id for the given question number problemId
+    const problemToRemove = workingProblems.find(p => p.id === problemId);
+    if (!problemToRemove) return;  // not found
+
+    const _id = problemToRemove._id;  // Mongo id needed for api call
+
+    const updatedProblems = workingProblems.filter(p => p.id !== problemId);
+    setWorkingProblems(updatedProblems);
+    localStorage.setItem('workingProblems', JSON.stringify(updatedProblems));
+
+    if (user) {
+      await fetchWithTokenRefresh(
+        `http://localhost:3001/api/users/working-problems/${_id}`,  // use _id here
+        {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
-        });
-      }
-    } catch (error) {}
-  };
+        }
+      );
+    }
+  } catch (error) {
+    console.error('Error removing working problem', error);
+  }
+};
+
 
   const fetchWorkingProblems = async () => {
     try {
       if (!user) return;
-      const response = await fetchWithTokenRefresh('http://localhost:3001/api/users/working-problems', {
+      const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/users/working-problems`, {
         headers: { 'Content-Type': 'application/json' },
       });
       const data = await response.json();
@@ -91,7 +104,7 @@ export const DataProvider = ({ children }) => {
   // ---------- Teams (unchanged) --------------
   const fetchTeams = async () => {
     try {
-      const response = await fetchWithTokenRefresh('http://localhost:3001/api/teams', {
+      const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/teams`, {
         headers: { 'Content-Type': 'application/json' },
       });
       const data = await response.json();
@@ -103,7 +116,7 @@ export const DataProvider = ({ children }) => {
 
   const createTeam = async (teamData) => {
     try {
-      const response = await fetchWithTokenRefresh('http://localhost:3001/api/teams', {
+      const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/teams`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(teamData),
@@ -128,7 +141,7 @@ export const DataProvider = ({ children }) => {
 
   const addProblemToTeam = async (teamId, problemData) => {
     try {
-      const response = await fetchWithTokenRefresh(`http://localhost:3001/api/teams/${teamId}/problems`, {
+      const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/teams/${teamId}/problems`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(problemData),
@@ -147,7 +160,7 @@ export const DataProvider = ({ children }) => {
 
   const joinTeam = async (inviteCode) => {
     try {
-      const response = await fetchWithTokenRefresh('http://localhost:3001/api/teams/join', {
+      const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/teams/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ inviteCode }),
@@ -166,7 +179,7 @@ export const DataProvider = ({ children }) => {
 
   const getTeamJoinRequests = async (teamId) => {
     try {
-      const response = await fetchWithTokenRefresh(`http://localhost:3001/api/teams/${teamId}/requests`, {
+      const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/teams/${teamId}/requests`, {
         headers: { 'Content-Type': 'application/json' },
       });
       const data = await response.json();
@@ -183,7 +196,7 @@ export const DataProvider = ({ children }) => {
   const acceptJoinRequest = async (teamId, userId) => {
     try {
       const response = await fetchWithTokenRefresh(
-        `http://localhost:3001/api/teams/${teamId}/requests/${userId}/accept`,
+        `${process.env.REACT_APP_SERVER_LINK}/teams/${teamId}/requests/${userId}/accept`,
         { method: 'PUT', headers: { 'Content-Type': 'application/json' } }
       );
       const data = await response.json();
@@ -200,7 +213,7 @@ export const DataProvider = ({ children }) => {
   const rejectJoinRequest = async (teamId, userId) => {
     try {
       const response = await fetchWithTokenRefresh(
-        `http://localhost:3001/api/teams/${teamId}/requests/${userId}/reject`,
+        `${process.env.REACT_APP_SERVER_LINK}/teams/${teamId}/requests/${userId}/reject`,
         { method: 'PUT', headers: { 'Content-Type': 'application/json' } }
       );
       const data = await response.json();
@@ -217,7 +230,7 @@ export const DataProvider = ({ children }) => {
   // ----------- Friends (unchanged) -----------
   const fetchFriends = async () => {
     try {
-      const response = await fetchWithTokenRefresh('http://localhost:3001/api/friends', {
+      const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/friends`, {
         headers: { 'Content-Type': 'application/json' },
       });
       const data = await response.json();
@@ -229,7 +242,7 @@ export const DataProvider = ({ children }) => {
 
   const addFriend = async (friendCode) => {
     try {
-      const response = await fetchWithTokenRefresh('http://localhost:3001/api/friends/add', {
+      const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/friends/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ friendCode }),
@@ -249,7 +262,7 @@ export const DataProvider = ({ children }) => {
   const acceptFriendRequest = async (friendId) => {
     try {
       const response = await fetchWithTokenRefresh(
-        `http://localhost:3001/api/friends/${friendId}/accept`,
+        `${process.env.REACT_APP_SERVER_LINK}/friends/${friendId}/accept`,
         { method: 'PUT', headers: { 'Content-Type': 'application/json' } }
       );
       const data = await response.json();
@@ -267,7 +280,7 @@ export const DataProvider = ({ children }) => {
   const rejectFriendRequest = async (friendId) => {
     try {
       const response = await fetchWithTokenRefresh(
-        `http://localhost:3001/api/friends/${friendId}/reject`,
+        `${process.env.REACT_APP_SERVER_LINK}/friends/${friendId}/reject`,
         { method: 'PUT', headers: { 'Content-Type': 'application/json' } }
       );
       const data = await response.json();
@@ -285,7 +298,7 @@ export const DataProvider = ({ children }) => {
   const removeFriend = async (friendId) => {
     try {
       const response = await fetchWithTokenRefresh(
-        `http://localhost:3001/api/friends/${friendId}`,
+        `${process.env.REACT_APP_SERVER_LINK}/friends/${friendId}`,
         { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
       );
       const data = await response.json();
@@ -328,7 +341,7 @@ export const DataProvider = ({ children }) => {
     try {
       if (!user) return { submissions: [], pagination: { total: 0, page: 1, totalPages: 0 } };
       const response = await fetchWithTokenRefresh(
-        `http://localhost:3001/api/submissions/user/${user._id || user.userId}?page=${page}&limit=${limit}`,
+        `${process.env.REACT_APP_SERVER_LINK}/submissions/user/${user._id || user.userId}?page=${page}&limit=${limit}`,
         { headers: { 'Content-Type': 'application/json' } }
       );
       const data = await response.json();
@@ -345,7 +358,7 @@ export const DataProvider = ({ children }) => {
   // ---------- Team Wars (unchanged) ----------
   const fetchTeamWars = async () => {
     try {
-      const response = await fetchWithTokenRefresh('http://localhost:3001/api/team-wars');
+      const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/team-wars`);
       if (!response.ok) return [];
       const data = await response.json();
       if (data.success) {
@@ -361,7 +374,7 @@ export const DataProvider = ({ children }) => {
 
   const getTeamWar = async (warId) => {
     try {
-      const response = await fetchWithTokenRefresh(`http://localhost:3001/api/team-wars/${warId}`);
+      const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/team-wars/${warId}`);
       if (!response.ok) return null;
       const data = await response.json();
       if (data.success) {
@@ -376,7 +389,7 @@ export const DataProvider = ({ children }) => {
 
   const createTeamWar = async (challengedTeamId, warType, scheduledTime) => {
     try {
-      const response = await fetchWithTokenRefresh('http://localhost:3001/api/team-wars', {
+      const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/team-wars`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ challengedTeamId, warType, scheduledTime }),
@@ -396,7 +409,7 @@ export const DataProvider = ({ children }) => {
   const submitTeamWarSolution = async (warId, problemId, code) => {
     try {
       const response = await fetchWithTokenRefresh(
-        `http://localhost:3001/api/team-wars/${warId}/submit`,
+        `${process.env.REACT_APP_SERVER_LINK}/team-wars/${warId}/submit`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -417,7 +430,7 @@ export const DataProvider = ({ children }) => {
   const startTeamWar = async (warId) => {
     try {
       const response = await fetchWithTokenRefresh(
-        `http://localhost:3001/api/team-wars/${warId}/start`,
+        `${process.env.REACT_APP_SERVER_LINK}/team-wars/${warId}/start`,
         { method: 'PUT', headers: { 'Content-Type': 'application/json' } }
       );
       const data = await response.json();
@@ -435,7 +448,7 @@ export const DataProvider = ({ children }) => {
   const joinTeamWar = async (warId, teamId) => {
     try {
       const response = await fetchWithTokenRefresh(
-        `http://localhost:3001/api/team-wars/${warId}/join`,
+        `${process.env.REACT_APP_SERVER_LINK}/team-wars/${warId}/join`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

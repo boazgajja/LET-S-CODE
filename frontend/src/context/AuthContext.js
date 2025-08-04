@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       console.log('🔄 Attempting token refresh...');
-      const response = await fetch('http://localhost:3001/api/refresh', {
+      const response = await fetch(`${process.env.REACT_APP_SERVER_LINK}/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken }),
@@ -100,7 +100,7 @@ export const AuthProvider = ({ children }) => {
             /* 
             // Uncomment this when you have a verify endpoint
             try {
-              const response = await fetch('http://localhost:3001/api/verify', {
+              const response = await fetch('${process.env.REACT_APP_SERVER_LINK}/verify', {
                 method: 'GET',
                 headers: { 
                   'Authorization': `Bearer ${storedToken}`,
@@ -216,7 +216,7 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(true);
       console.log('🔐 Attempting login...');
       
-      const response = await fetch('http://localhost:3001/api/login', {
+      const response = await fetch(`${process.env.REACT_APP_SERVER_LINK}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials),
@@ -267,7 +267,7 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(true);
       console.log('📝 Attempting registration...');
       
-      const response = await fetch('http://localhost:3001/api/register', {
+      const response = await fetch(`${process.env.REACT_APP_SERVER_LINK}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),

@@ -48,7 +48,7 @@ const TeamDetail = () => {
         setLoading(true);
         setError(null);
         
-        const response = await fetchWithTokenRefresh(`http://localhost:3001/api/teams/${teamId}`, {
+        const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/teams/${teamId}`, {
           headers: {
             'Content-Type': 'application/json',
           },
@@ -82,7 +82,7 @@ const TeamDetail = () => {
     
     setLoadingMessages(true);
     try {
-      const response = await fetchWithTokenRefresh(`http://localhost:3001/api/teams/${teamId}/messages`, {
+      const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/teams/${teamId}/messages`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -108,7 +108,7 @@ const TeamDetail = () => {
 
     setSendingMessage(true);
     try {
-      const response = await fetchWithTokenRefresh(`http://localhost:3001/api/teams/${teamId}/messages`, {
+      const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/teams/${teamId}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -191,7 +191,7 @@ const TeamDetail = () => {
     
     setLoadingRequests(true);
     try {
-      const response = await fetchWithTokenRefresh(`http://localhost:3001/api/teams/${teamId}/requests`, {
+      const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/teams/${teamId}/requests`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -230,7 +230,7 @@ const TeamDetail = () => {
         await fetchJoinRequests();
         
         // Refresh team details to show new member
-        const response = await fetchWithTokenRefresh(`http://localhost:3001/api/teams/${teamId}`, {
+        const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/teams/${teamId}`, {
           headers: {
             'Content-Type': 'application/json',
           },

@@ -13,7 +13,7 @@ const TeamPage = () => {
     const fetchTeam = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(`http://localhost:3001/api/teams/${teamId}`, {
+        const response = await axios.get(`${process.env.REACT_APP_SERVER_LINK}/teams/${teamId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         

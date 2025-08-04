@@ -25,7 +25,7 @@ const Friends = () => {
 
   const fetchMyFriendCode = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/friends/code', {
+      const response = await fetch('${process.env.REACT_APP_SERVER_LINK}/friends/code', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
