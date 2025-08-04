@@ -228,5 +228,37 @@ router.delete('/working-problems/:problemId', authenticateToken, asyncHandler(as
         });
     }
 }));
+router.delete('/working-problems/:problemId', authenticateToken, asyncHandler(async (req, res) => {
+    const { problemId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(problemId)) {
+        return res.status(400).json({ success: false, message: 'Invalid Problem ID' });
+    }
+
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const initialLength = user.workingProblems?.length || 0;
+    user.workingProblems = user.workingProblems?.filter(
+        prob => prob.toString() !== problemId
+    ) || [];
+
+    const wasRemoved = user.workingProblems.length < initialLength;
+
+    if (wasRemoved) {
+        await user.save();
+        console.log("Working problem removed successfully for user:", req.user.userId);
+    }
+
+    await user.populate('workingProblems');
+
+    res.json({
+        success: true,
+        message: wasRemoved ? 'Problem removed from working list' : 'Problem was not in working list',
+        data: user.workingProblems
+    });
+}));
 
 module.exports = router;

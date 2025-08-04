@@ -14,6 +14,31 @@ const ProfilePage = () => {
   
   const { user, updateUser, logout, workingProblems } = useDataContext();
   const navigate = useNavigate();
+const { fetchWithTokenRefresh } = useDataContext();
+const [recentSubmissions, setRecentSubmissions] = useState([]);
+
+useEffect(() => {
+  const fetchRecentSubmissions = async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetchWithTokenRefresh(
+        `${process.env.REACT_APP_SERVER_LINK}/submissions/user/${user._id || user.userId}?page=1&limit=10`,
+        {
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setRecentSubmissions(data.data.submissions || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch recent submissions:", error);
+    }
+  };
+
+  fetchRecentSubmissions();
+}, [user]);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -278,7 +303,7 @@ const ProfilePage = () => {
                 </div>
                 {user.submissions && user.submissions.length > 0 ? (
                   <div className="p_submissions-list">
-                    {user.submissions.slice(0, 10).map((submission, index) => (
+                    {recentSubmissions.map((submission, index) => (console.log(submission),
                       <div key={index} className="p_submission-item">
                         <div className="p_submission-problem">
                           <Link to={`/problem/${submission.problemId}`}>{submission.problemTitle}</Link>

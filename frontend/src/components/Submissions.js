@@ -33,7 +33,7 @@ const Submissions = () => {
     try {
       setLoading(true);
       const response = await fetchWithTokenRefresh(
-        `http://localhost:3001/api/submissions/user/${user._id || user.userId}?page=${page}&limit=${pageSize}`,
+        `${process.env.REACT_APP_SERVER_LINK}/submissions/user/${user._id || user.userId}?page=${page}&limit=${pageSize}`,
         {
           headers: {
             'Content-Type': 'application/json'
@@ -64,7 +64,7 @@ const Submissions = () => {
     try {
       setLoading(true);
       const response = await fetchWithTokenRefresh(
-        `http://localhost:3001/api/submissions/${submissionId}`,
+        `${process.env.REACT_APP_SERVER_LINK}/submissions/${submissionId}`,
         {
           headers: {
             'Content-Type': 'application/json'

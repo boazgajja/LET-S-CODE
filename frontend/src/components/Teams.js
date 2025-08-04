@@ -66,7 +66,7 @@ const Teams = () => {
   const handleDeleteTeam = async (teamId) => {
     if (!window.confirm('Are you sure you want to delete this team?')) return;
     try {
-      const response = await fetchWithTokenRefresh(`http://localhost:3001/api/teams/${teamId}`, {
+      const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/teams/${teamId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' }
       });
