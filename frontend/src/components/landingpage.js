@@ -1,9 +1,8 @@
-// Remove unused imports
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Code2, ChevronRight, Users, Trophy, Brain } from 'lucide-react'; // Remove unused imports
+import { Code2, ChevronRight, Users, Trophy, Brain, Eye, EyeOff } from 'lucide-react';
 import '../styles/landing.css';
-import { useDataContext } from '../context/datacontext';
+import { useAuth } from '../context/AuthContext';
 
 const LetsCodeLanding = () => {
   const [showSignIn, setShowSignIn] = useState(false);
@@ -12,14 +11,15 @@ const LetsCodeLanding = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { updateUser, user } = useDataContext();
+  const { login, register, isAuthenticated, user } = useAuth();
 
   // If user is already logged in, redirect to problems page
   useEffect(() => {
-    if (user) {
-      navigate('/problem');
+    if (isAuthenticated && user) {
+      console.log('User is authenticated, redirecting to /problem');
+      navigate('/problem', { replace: true });
     }
-  }, [user, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   const [signInData, setSignInData] = useState({
     email: '',
@@ -35,45 +35,92 @@ const LetsCodeLanding = () => {
     lastName: ''
   });
 
+  const [errors, setErrors] = useState({});
+
+  // Clear errors when switching forms
+  const clearErrors = () => setErrors({});
+
+  // Validation functions
+  const validateSignIn = () => {
+    const newErrors = {};
+    
+    if (!signInData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(signInData.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+    
+    if (!signInData.password) {
+      newErrors.password = 'Password is required';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateSignUp = () => {
+    const newErrors = {};
+    
+    if (!signUpData.username.trim()) {
+      newErrors.username = 'Username is required';
+    } else if (signUpData.username.length < 3) {
+      newErrors.username = 'Username must be at least 3 characters';
+    }
+    
+    if (!signUpData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(signUpData.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+    
+    if (!signUpData.firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+    }
+    
+    if (!signUpData.lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
+    }
+    
+    if (!signUpData.password) {
+      newErrors.password = 'Password is required';
+    } else if (signUpData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+    
+    if (!signUpData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (signUpData.password !== signUpData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSignIn = async (e) => {
     e.preventDefault();
-    if (!signInData.email || !signInData.password) {
-      alert('Please fill in all fields');
+    
+    if (!validateSignIn()) {
       return;
     }
 
     setIsLoading(true);
+    
     try {
-      console.log('Signing in with data', signInData);
-      const response = await fetch('http://localhost:3001/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(signInData),
-      });
-      const data = await response.json();
-      console.log('Sign in response:', data);
-      if (response.ok) {
-        const userId = data.data.user._id;
-        localStorage.setItem('userId', userId);
-        localStorage.setItem('user', JSON.stringify(data.data.user));
-        
-        // Store the tokens
-        localStorage.setItem('token', data.data.tokens.accessToken);
-        localStorage.setItem('refreshToken', data.data.tokens.refreshToken);
-        
-        // Update user in context
-        updateUser(data.data.user);
-        
-        console.log('User ID:', data.data.user._id);
-        console.log('Sign in successful:', data);
-        alert('Sign in successful!');
+      const result = await login(signInData);
+      
+      if (result.success) {
+        console.log('✅ Sign in successful');
         setShowSignIn(false);
-        
-        // Navigate to problems page
-        navigate('/problem');
-      } else alert(data.message || 'Sign in failed');
+        setSignInData({ email: '', password: '' });
+        clearErrors();
+        // Navigation will be handled by the useEffect
+      } else {
+        setErrors({ submit: result.message || 'Sign in failed' });
+      }
     } catch (error) {
-      alert('Sign in error.');
+      console.error('Sign in error:', error);
+      setErrors({ submit: 'Sign in error occurred' });
     } finally {
       setIsLoading(false);
     }
@@ -81,35 +128,46 @@ const LetsCodeLanding = () => {
 
   const handleSignUp = async (e) => {
     e.preventDefault();
-    const { username, email, password, confirmPassword, firstName, lastName } = signUpData;
-    if (!username || !email || !password || !confirmPassword || !firstName || !lastName) {
-      alert('Please fill in all fields');
-      return;
-    }
-    if (password !== confirmPassword) {
-      alert('Passwords do not match');
+    
+    if (!validateSignUp()) {
       return;
     }
 
     setIsLoading(true);
+    
     try {
-      const response = await fetch(process.env.REACT_APP_SERVER_LINK +'/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password, firstName, lastName }),
-      });
-      const data = await response.json();
-      if (response.ok) {
+      const { confirmPassword, ...registrationData } = signUpData;
+      const result = await register(registrationData);
+      
+      if (result.success) {
         alert('Account created successfully! Please sign in.');
         setShowSignUp(false);
         setShowSignIn(true);
-        setSignUpData({ username: '', email: '', password: '', confirmPassword: '', firstName: '', lastName: '' });
-      } else alert(data.message || 'Sign up failed');
+        setSignUpData({ 
+          username: '', 
+          email: '', 
+          password: '', 
+          confirmPassword: '', 
+          firstName: '', 
+          lastName: '' 
+        });
+        clearErrors();
+      } else {
+        setErrors({ submit: result.message || 'Sign up failed' });
+      }
     } catch (error) {
-      alert('Sign up error.');
+      console.error('Sign up error:', error);
+      setErrors({ submit: 'Sign up error occurred' });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const closeModal = (modalSetter) => {
+    modalSetter(false);
+    clearErrors();
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   };
 
   const renderFormOverlay = (form, closeHandler) => (
@@ -122,71 +180,254 @@ const LetsCodeLanding = () => {
   );
 
   const signInForm = (
-    <form onSubmit={handleSignIn}>
-      <h2>Sign In</h2>
-      <input type="email" placeholder="Email" value={signInData.email} onChange={(e) => setSignInData({ ...signInData, email: e.target.value })} required />
-      <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={signInData.password} onChange={(e) => setSignInData({ ...signInData, password: e.target.value })} required />
-      <button type="button" onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button>
-      <button type="submit" disabled={isLoading}>{isLoading ? 'Signing In...' : 'Sign In'}</button>
+    <form onSubmit={handleSignIn} className="l_auth-form">
+      <h2>Welcome Back</h2>
+      <p className="l_form-subtitle">Sign in to continue coding</p>
+      
+      {errors.submit && <div className="l_error-message">{errors.submit}</div>}
+      
+      <div className="l_form-group">
+        <input 
+          type="email" 
+          placeholder="Email Address" 
+          value={signInData.email} 
+          onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
+          className={errors.email ? 'l_error' : ''}
+        />
+        {errors.email && <span className="l_field-error">{errors.email}</span>}
+      </div>
+      
+      <div className="l_form-group">
+        <div className="l_password-input">
+          <input 
+            type={showPassword ? 'text' : 'password'} 
+            placeholder="Password" 
+            value={signInData.password} 
+            onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
+            className={errors.password ? 'l_error' : ''}
+          />
+          <button 
+            type="button" 
+            className="l_password-toggle"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+        {errors.password && <span className="l_field-error">{errors.password}</span>}
+      </div>
+      
+      <button type="submit" disabled={isLoading} className="l_submit-btn">
+        {isLoading ? 'Signing In...' : 'Sign In'}
+      </button>
+      
+      <p className="l_form-switch">
+        Don't have an account? 
+        <button 
+          type="button" 
+          onClick={() => { setShowSignIn(false); setShowSignUp(true); }}
+          className="l_link-btn"
+        >
+          Sign up here
+        </button>
+      </p>
     </form>
   );
 
   const signUpForm = (
-    <form onSubmit={handleSignUp}>
-      <h2>Sign Up</h2>
-      <input type="text" placeholder="Username" value={signUpData.username} onChange={(e) => setSignUpData({ ...signUpData, username: e.target.value })} required />
-      <input type="email" placeholder="Email" value={signUpData.email} onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })} required />
-      <input type="text" placeholder="First Name" value={signUpData.firstName} onChange={(e) => setSignUpData({ ...signUpData, firstName: e.target.value })} required />
-      <input type="text" placeholder="Last Name" value={signUpData.lastName} onChange={(e) => setSignUpData({ ...signUpData, lastName: e.target.value })} required />
-      <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={signUpData.password} onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })} required />
-      <input type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm Password" value={signUpData.confirmPassword} onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })} required />
-      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>{showConfirmPassword ? 'Hide' : 'Show'}</button>
-      <button type="submit" disabled={isLoading}>{isLoading ? 'Creating...' : 'Create Account'}</button>
+    <form onSubmit={handleSignUp} className="l_auth-form">
+      <h2>Join Let's Code</h2>
+      <p className="l_form-subtitle">Create your account to start coding</p>
+      
+      {errors.submit && <div className="l_error-message">{errors.submit}</div>}
+      
+      <div className="l_form-row">
+        <div className="l_form-group">
+          <input 
+            type="text" 
+            placeholder="First Name" 
+            value={signUpData.firstName} 
+            onChange={(e) => setSignUpData({ ...signUpData, firstName: e.target.value })}
+            className={errors.firstName ? 'l_error' : ''}
+          />
+          {errors.firstName && <span className="l_field-error">{errors.firstName}</span>}
+        </div>
+        
+        <div className="l_form-group">
+          <input 
+            type="text" 
+            placeholder="Last Name" 
+            value={signUpData.lastName} 
+            onChange={(e) => setSignUpData({ ...signUpData, lastName: e.target.value })}
+            className={errors.lastName ? 'l_error' : ''}
+          />
+          {errors.lastName && <span className="l_field-error">{errors.lastName}</span>}
+        </div>
+      </div>
+      
+      <div className="l_form-group">
+        <input 
+          type="text" 
+          placeholder="Username" 
+          value={signUpData.username} 
+          onChange={(e) => setSignUpData({ ...signUpData, username: e.target.value })}
+          className={errors.username ? 'l_error' : ''}
+        />
+        {errors.username && <span className="l_field-error">{errors.username}</span>}
+      </div>
+      
+      <div className="l_form-group">
+        <input 
+          type="email" 
+          placeholder="Email Address" 
+          value={signUpData.email} 
+          onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
+          className={errors.email ? 'l_error' : ''}
+        />
+        {errors.email && <span className="l_field-error">{errors.email}</span>}
+      </div>
+      
+      <div className="l_form-group">
+        <div className="l_password-input">
+          <input 
+            type={showPassword ? 'text' : 'password'} 
+            placeholder="Password" 
+            value={signUpData.password} 
+            onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
+            className={errors.password ? 'l_error' : ''}
+          />
+          <button 
+            type="button" 
+            className="l_password-toggle"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+        {errors.password && <span className="l_field-error">{errors.password}</span>}
+      </div>
+      
+      <div className="l_form-group">
+        <div className="l_password-input">
+          <input 
+            type={showConfirmPassword ? 'text' : 'password'} 
+            placeholder="Confirm Password" 
+            value={signUpData.confirmPassword} 
+            onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })}
+            className={errors.confirmPassword ? 'l_error' : ''}
+          />
+          <button 
+            type="button" 
+            className="l_password-toggle"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+          >
+            {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+        {errors.confirmPassword && <span className="l_field-error">{errors.confirmPassword}</span>}
+      </div>
+      
+      <button type="submit" disabled={isLoading} className="l_submit-btn">
+        {isLoading ? 'Creating Account...' : 'Create Account'}
+      </button>
+      
+      <p className="l_form-switch">
+        Already have an account? 
+        <button 
+          type="button" 
+          onClick={() => { setShowSignUp(false); setShowSignIn(true); }}
+          className="l_link-btn"
+        >
+          Sign in here
+        </button>
+      </p>
     </form>
   );
 
   return (
     <div className="l_landing-container">
       <header className="l_header">
-        <div className="l_header-content" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="l_header-content">
           <div className="l_logo">
-            <div className="l_logo-icon"><Code2 className="l_logo-svg" /></div>
+            <div className="l_logo-icon">
+              <Code2 className="l_logo-svg" />
+            </div>
             <span className="l_logo-text">LET'S CODE</span>
           </div>
           <div className="l_header-buttons">
-            <button onClick={() => setShowSignIn(true)} className="l_btn-signin">Sign In</button>
-            <button onClick={() => setShowSignUp(true)} className="l_btn-signup">Sign Up</button>
+            <button onClick={() => setShowSignIn(true)} className="l_btn-signin">
+              Sign In
+            </button>
+            <button onClick={() => setShowSignUp(true)} className="l_btn-signup">
+              Sign Up
+            </button>
           </div>
         </div>
       </header>
 
       <section className="l_hero">
         <div className="l_hero-content">
-          <div className="l_hero-icon"><div className="l_hero-icon-bg"><Code2 className="l_hero-icon-svg" /></div></div>
+          <div className="l_hero-icon">
+            <div className="l_hero-icon-bg">
+              <Code2 className="l_hero-icon-svg" />
+            </div>
+          </div>
           <h1 className="l_hero-title">LET'S CODE</h1>
-          <blockquote className="l_hero-quote">"The best way to learn to code is by coding. Every expert was once a beginner."</blockquote>
-          <p className="l_hero-description">Master programming through hands-on practice. Solve challenges, build projects, and level up your coding skills with our interactive platform.</p>
+          <blockquote className="l_hero-quote">
+            "The best way to learn to code is by coding. Every expert was once a beginner."
+          </blockquote>
+          <p className="l_hero-description">
+            Master programming through hands-on practice. Solve challenges, build projects, 
+            and level up your coding skills with our interactive platform.
+          </p>
           <div className="l_hero-buttons">
-            <button onClick={() => setShowSignUp(true)} className="l_btn-primary"><span>Start Coding Now</span><ChevronRight className="l_btn-icon" /></button>
-            <button onClick={() => setShowSignIn(true)} className="l_btn-secondary">Already have an account?</button>
+            <button onClick={() => setShowSignUp(true)} className="l_btn-primary">
+              <span>Start Coding Now</span>
+              <ChevronRight className="l_btn-icon" />
+            </button>
+            <button onClick={() => setShowSignIn(true)} className="l_btn-secondary">
+              Already have an account?
+            </button>
           </div>
         </div>
       </section>
 
-      {showSignIn && renderFormOverlay(signInForm, () => setShowSignIn(false))}
-      {showSignUp && renderFormOverlay(signUpForm, () => setShowSignUp(false))}
+      {/* Modals */}
+      {showSignIn && renderFormOverlay(signInForm, () => closeModal(setShowSignIn))}
+      {showSignUp && renderFormOverlay(signUpForm, () => closeModal(setShowSignUp))}
 
       <section className="l_features">
         <div className="l_features-grid">
-          <div className="l_feature-card"><div className="l_feature-icon l_green"><Brain /></div><h3>Smart Challenges</h3><p>Progressive difficulty levels that adapt to your skill level.</p></div>
-          <div className="l_feature-card"><div className="l_feature-icon l_purple"><Trophy /></div><h3>Track Progress</h3><p>Monitor your improvement with detailed analytics.</p></div>
-          <div className="l_feature-card"><div className="l_feature-icon l_yellow"><Users /></div><h3>Community</h3><p>Join thousands of developers learning and growing together.</p></div>
+          <div className="l_feature-card">
+            <div className="l_feature-icon l_green">
+              <Brain />
+            </div>
+            <h3>Smart Challenges</h3>
+            <p>Progressive difficulty levels that adapt to your skill level.</p>
+          </div>
+          <div className="l_feature-card">
+            <div className="l_feature-icon l_purple">
+              <Trophy />
+            </div>
+            <h3>Track Progress</h3>
+            <p>Monitor your improvement with detailed analytics.</p>
+          </div>
+          <div className="l_feature-card">
+            <div className="l_feature-icon l_yellow">
+              <Users />
+            </div>
+            <h3>Community</h3>
+            <p>Join thousands of developers learning and growing together.</p>
+          </div>
         </div>
       </section>
 
       <footer className="l_footer">
         <div className="l_footer-content">
-          <div className="l_footer-logo"><Code2 className="l_footer-icon" /><span>LET'S CODE</span></div>
+          <div className="l_footer-logo">
+            <Code2 className="l_footer-icon" />
+            <span>LET'S CODE</span>
+          </div>
           <p>&copy; 2025 Let's Code. All rights reserved.</p>
         </div>
       </footer>

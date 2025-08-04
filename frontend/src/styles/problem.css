@@ -98,7 +98,7 @@
           flex-direction: column;
         }
         .left-panel {
-            margin-top: 10vh;
+            margin-top: 0vh;
             width: 50%;
             max-width:50%;
             background: #0f0f0f;

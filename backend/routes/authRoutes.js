@@ -121,7 +121,7 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body; // identifier can be email or username
-        console.log('Login attempt with identifier:', email);
+        // console.log('Login attempt with identifier:', email);
         // Remove the connectDB call since we're connecting in index.js
         // await connectDB();
         
@@ -201,7 +201,7 @@ router.post('/login', async (req, res) => {
 router.post('/refresh', async (req, res) => {
     try {
         const { refreshToken } = req.body;
-        console.log("refresh token called");
+        // console.log("refresh token called");
         if (!refreshToken) {
             return res.status(401).json({
                 success: false,

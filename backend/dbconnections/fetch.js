@@ -23,7 +23,7 @@ const getAllProblems = async () => {
     // await connectDB();
     const problems = await Problem.find({});
     console.log(`Retrieved ${problems.length} problems`);
-    console.log(problems);
+    // console.log(problems);
     return problems;
   } catch (error) {
     console.error('Error fetching all problems:', error.message);
@@ -50,7 +50,7 @@ const getProblemById = async (problemId) => {
     return problem;
   } catch (error) {
     console.trace("❌ Stack Trace");
-    console.error('❌ Error fetching problem by ID:', error.message);
+    // console.error('❌ Error fetching problem by ID:', error.message);
     throw error;
   }
 };

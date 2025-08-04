@@ -5,10 +5,8 @@ const { connectDB, disconnectDB } = require('./db');
 // Delete problem by ID
 const deleteProblem = async (id) => {
   try {
-    await connectDB();
-const deletedProblem = await Problem.findOneAndDelete({ id: String(id) }); // ✅
+    const deletedProblem = await Problem.findOneAndDelete({ id: String(id) }); // ✅
 
-    
     if (deletedProblem) {
       console.log(`Problem deleted: ${deletedProblem.title}`);
     } else {
@@ -19,8 +17,6 @@ const deletedProblem = await Problem.findOneAndDelete({ id: String(id) }); // �
   } catch (error) {
     console.error('Error deleting problem:', error.message);
     throw error;
-  } finally {
-    await disconnectDB();
   }
 };
 
@@ -109,10 +105,41 @@ const softDeleteProblem = async (id) => {
   }
 };
 
+// Add this function to the file
+
+// Delete team by ID
+const deleteTeam = async (teamId) => {
+  try {
+    await connectDB();
+    const deletedTeam = await Team.findByIdAndDelete(teamId);
+    
+    if (deletedTeam) {
+      console.log(`Team deleted: ${deletedTeam.name}`);
+      
+      // Also remove team from all users' teams array
+      await User.updateMany(
+        { 'teams.team': teamId },
+        { $pull: { teams: { team: teamId } } }
+      );
+    } else {
+      console.log('Team not found for deletion');
+    }
+    
+    return deletedTeam;
+  } catch (error) {
+    console.error('Error deleting team:', error.message);
+    throw error;
+  } finally {
+    await disconnectDB();
+  }
+};
+
+// Add to module.exports
 module.exports = {
   deleteProblem,
   // deleteProblemFromList,
   deleteProblemBySlug,
   deleteMultipleProblems,
-  softDeleteProblem
+  softDeleteProblem,
+  deleteTeam
 };

@@ -1,253 +1,496 @@
+/* TeamDetail.css - Dark Theme */
+
 .td_team-detail-container {
   max-width: 1200px;
-  margin: 3rem auto 0 auto; /* ⬅️ Top margin added */
-  padding: 2rem;
-  background-color: #1a1a1a;
-  color: #e0e0e0;
-  border-radius: 8px;
+  margin: 0 auto;
+  padding: 20px;
+  padding-top: 100px; /* Account for fixed navbar */
+  background: #0f172a;
+  min-height: 100vh;
+  color: #e2e8f0;
 }
 
+/* Header Styles */
 .td_team-header {
-  margin-bottom: 2rem;
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border: 1px solid #334155;
+}
+
+.td_header-top {
+  margin-bottom: 16px;
+}
+
+.td_back-button {
+  background: #374151;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #d1d5db;
+  transition: all 0.2s;
+  border: 1px solid #4b5563;
+}
+
+.td_back-button:hover {
+  background: #4b5563;
+  transform: translateX(-2px);
+  color: #f9fafb;
 }
 
 .td_team-header h1 {
-  margin-bottom: 0.5rem;
-  color: #ffffff;
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #f1f5f9;
+  margin: 0 0 8px 0;
 }
 
 .td_team-description {
-  color: #b0b0b0;
-  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  color: #94a3b8;
+  margin-bottom: 20px;
 }
 
 .td_team-meta {
   display: flex;
-  gap: 1rem;
-  font-size: 0.9rem;
-  color: #999;
-  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
-.td_team-meta span.td_private {
-  color: #ff6b6b;
+.td_meta-item {
+  background: #374151;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #d1d5db;
+  border: 1px solid #4b5563;
 }
 
-.td_team-meta span.td_public {
-  color: #69db7c;
+.td_team-type {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.td_team-type.td_private {
+  background: #451a03;
+  color: #fbbf24;
+  border: 1px solid #92400e;
+}
+
+.td_team-type.td_public {
+  background: #064e3b;
+  color: #34d399;
+  border: 1px solid #059669;
 }
 
 .td_team-actions {
-  margin-top: 1rem;
+  margin-top: 20px;
+}
+
+.td_invite-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #1e293b;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+}
+
+.td_invite-label {
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.td_invite-code {
+  background: #111827;
+  color: #f9fafb;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  border: 1px solid #374151;
 }
 
 .td_invite-btn {
-  padding: 0.5rem 1rem;
-  background-color: #4263eb;
+  background: #3b82f6;
   color: white;
   border: none;
-  border-radius: 4px;
+  padding: 8px 16px;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s;
+  font-size: 14px;
+  transition: background 0.2s;
 }
 
 .td_invite-btn:hover {
-  background-color: #364fc7;
+  background: #2563eb;
 }
 
+/* Tab Styles */
 .td_team-tabs {
   display: flex;
-  border-bottom: 1px solid #333;
-  margin-bottom: 1.5rem;
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  gap: 4px;
+  border: 1px solid #334155;
 }
 
 .td_tab-btn {
-  padding: 0.75rem 1.5rem;
-  background: none;
+  flex: 1;
+  background: transparent;
   border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: bold;
-  color: #999;
-  border-bottom: 3px solid transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #94a3b8;
   transition: all 0.2s;
+  position: relative;
 }
 
 .td_tab-btn:hover {
-  color: #e0e0e0;
+  background: #334155;
+  color: #d1d5db;
 }
 
 .td_tab-btn.td_active {
-  color: #4263eb;
-  border-bottom-color: #4263eb;
+  background: #3b82f6;
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.5);
 }
 
+.td_request-badge {
+  background: #ef4444;
+  color: white;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
+  font-weight: 600;
+}
+
+/* Tab Content */
 .td_tab-content {
-  min-height: 400px;
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  min-height: 500px;
+  border: 1px solid #334155;
 }
 
 .td_tab-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #475569;
 }
 
-.td_add-problem-btn {
-  padding: 0.5rem 1rem;
-  background-color: #37b24d;
+.td_tab-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0;
+}
+
+/* Problem Tab Styles */
+.td_add-problem-btn, .td_add-first-problem-btn {
+  background: #10b981;
   color: white;
   border: none;
-  border-radius: 4px;
+  padding: 10px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
 }
 
-.td_add-problem-btn:hover {
-  background-color: #2b9e3f;
+.td_add-problem-btn:hover, .td_add-first-problem-btn:hover {
+  background: #059669;
 }
 
 .td_add-problem-form {
-  background-color: #252525;
-  padding: 1.5rem;
+  background: #0f172a;
+  padding: 20px;
   border-radius: 8px;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  border: 1px solid #333;
+  margin-bottom: 24px;
+  border: 1px solid #334155;
+}
+
+.td_add-problem-form h3 {
+  margin: 0 0 16px 0;
+  color: #e5e7eb;
 }
 
 .td_form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 16px;
 }
 
 .td_form-group label {
   display: block;
-  margin-bottom: 0.5rem;
-  font-weight: bold;
-  color: #e0e0e0;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #e5e7eb;
 }
 
 .td_form-group input,
 .td_form-group textarea {
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #444;
-  border-radius: 4px;
-  background-color: #333;
-  color: #e0e0e0;
+  padding: 10px 12px;
+  border: 1px solid #4b5563;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  background: #374151;
+  color: #f9fafb;
 }
 
-.td_form-group textarea {
-  min-height: 100px;
+.td_form-group input:focus,
+.td_form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.td_form-group input::placeholder,
+.td_form-group textarea::placeholder {
+  color: #9ca3af;
+}
+
+.td_form-actions {
+  display: flex;
+  gap: 12px;
 }
 
 .td_submit-btn {
-  padding: 0.5rem 1rem;
-  background-color: #4263eb;
+  background: #10b981;
   color: white;
   border: none;
-  border-radius: 4px;
+  padding: 10px 16px;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s;
+  font-size: 14px;
+  font-weight: 500;
 }
 
-.td_submit-btn:hover {
-  background-color: #364fc7;
+.td_cancel-btn {
+  background: #6b7280;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
 }
 
-.td_problems-list {
+.td_no-problems {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.td_empty-state h3 {
+  color: #9ca3af;
+  margin-bottom: 8px;
+}
+
+.td_empty-state p {
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+.td_problems-grid {
   display: grid;
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
 }
 
 .td_problem-card {
-  background-color: #252525;
+  background: #374151;
+  border: 1px solid #4b5563;
   border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  border: 1px solid #333;
+  padding: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.td_problem-card h3 {
-  margin-top: 0;
-  margin-bottom: 0.5rem;
-  color: #ffffff;
+.td_problem-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  border-color: #6b7280;
 }
 
-.td_problem-meta {
+.td_problem-header {
   display: flex;
-  gap: 1rem;
-  font-size: 0.9rem;
-  color: #999;
-  margin-bottom: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.td_problem-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0;
+  flex: 1;
+  margin-right: 12px;
 }
 
 .td_difficulty {
-  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 .td_difficulty.td_easy {
-  color: #69db7c;
+  background: #064e3b;
+  color: #34d399;
+  border: 1px solid #059669;
 }
 
 .td_difficulty.td_medium {
-  color: #fcc419;
+  background: #451a03;
+  color: #fbbf24;
+  border: 1px solid #d97706;
 }
 
 .td_difficulty.td_hard {
-  color: #ff6b6b;
+  background: #7f1d1d;
+  color: #f87171;
+  border: 1px solid #dc2626;
+}
+
+.td_difficulty.td_unknown {
+  background: #374151;
+  color: #9ca3af;
+  border: 1px solid #6b7280;
+}
+
+.td_problem-meta {
+  margin-bottom: 16px;
+}
+
+.td_meta-row {
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #9ca3af;
 }
 
 .td_problem-notes {
-  background-color: #333;
-  padding: 1rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-  color: #e0e0e0;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #1e293b;
+  border-radius: 6px;
+  border-left: 3px solid #3b82f6;
+}
+
+.td_problem-notes h4 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  color: #e5e7eb;
+}
+
+.td_problem-notes p {
+  margin: 0;
+  font-size: 14px;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+.td_problem-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .td_solve-btn {
-  padding: 0.5rem 1rem;
-  background-color: #4263eb;
+  background: #3b82f6;
   color: white;
   border: none;
-  border-radius: 4px;
+  padding: 8px 16px;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
 }
 
 .td_solve-btn:hover {
-  background-color: #364fc7;
+  background: #2563eb;
 }
 
-.td_members-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.5rem;
+/* Members Tab Styles */
+.td_join-requests {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #475569;
 }
 
-.td_member-card {
+.td_requests-header h3 {
+  font-size: 1.2rem;
+  color: #e5e7eb;
+  margin-bottom: 16px;
+}
+
+.td_loading-text {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  font-weight: normal;
+}
+
+.td_no-requests {
+  text-align: center;
+  padding: 20px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.td_requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.td_request-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: #374151;
+  border: 1px solid #4b5563;
+  border-radius: 8px;
+}
+
+.td_request-user {
   display: flex;
   align-items: center;
-  background-color: #252525;
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  border: 1px solid #333;
+  gap: 12px;
 }
 
-.td_member-avatar {
-  width: 50px;
-  height: 50px;
+.td_user-avatar, .td_member-avatar {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   overflow: hidden;
-  margin-right: 1rem;
+  flex-shrink: 0;
+  border: 2px solid #4b5563;
 }
 
-.td_member-avatar img {
+.td_user-avatar img, .td_member-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -256,186 +499,731 @@
 .td_avatar-placeholder {
   width: 100%;
   height: 100%;
-  background-color: #4263eb;
+  background: #3b82f6;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  font-size: 1.2rem;
+  font-weight: 600;
+  font-size: 18px;
 }
 
-.td_member-info h3 {
+.td_user-info h4, .td_member-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.td_user-info p, .td_member-info p {
   margin: 0;
-  font-size: 1rem;
-  color: #ffffff;
+  font-size: 14px;
+  color: #9ca3af;
 }
 
-.td_member-info p {
-  margin: 0.25rem 0;
-  color: #b0b0b0;
-  font-size: 0.9rem;
-}
-
-.td_role {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  margin-top: 0.5rem;
-}
-
-.td_role.td_owner {
-  background-color: #ff6b6b;
-  color: white;
-}
-
-.td_role.td_admin {
-  background-color: #fcc419;
-  color: #333;
-}
-
-.td_role.td_member {
-  background-color: #69db7c;
-  color: #333;
-}
-
-.td_loading,
-.td_error,
-.td_not-found {
-  text-align: center;
-  padding: 2rem;
-  background-color: #252525;
-  border-radius: 8px;
-  margin-top: 2rem;
-  color: #e0e0e0;
-  border: 1px solid #333;
-}
-
-.td_error {
-  color: #ff6b6b;
-}
-
-.td_no-problems {
-  text-align: center;
-  padding: 2rem;
-  background-color: #252525;
-  border-radius: 8px;
-  color: #b0b0b0;
-  border: 1px solid #333;
-}
-
-.td_problem-type-selector {
-  display: flex;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid #333;
-}
-
-.td_type-btn {
-  padding: 0.5rem 1rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-  color: #999;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s;
-}
-
-.td_type-btn:hover {
-  color: #e0e0e0;
-}
-
-.td_type-btn.td_active {
-  color: #4263eb;
-  border-bottom: 2px solid #4263eb;
-}
-
-/* Join Requests Styles */
-.td_join-requests {
-  margin-top: 2rem;
-}
-
-.td_requests-list {
-  margin-top: 1rem;
-}
-
-.td_request-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #2a2a2a;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-}
-
-.td_request-user {
-  display: flex;
-  align-items: center;
-}
-
-.td_user-avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  margin-right: 1rem;
-  object-fit: cover;
-}
-
-.td_user-info h4 {
-  margin: 0;
-  color: #ffffff;
-}
-
-.td_user-info p {
-  margin: 0.25rem 0;
-  color: #b0b0b0;
-}
-
-.td_request-date {
-  font-size: 0.8rem;
-  color: #888888;
+.td_request-date, .td_join-date {
+  font-size: 12px !important;
+  color: #6b7280 !important;
 }
 
 .td_request-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .td_accept-btn {
-  background-color: #4caf50;
+  background: #10b981;
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  padding: 8px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  font-size: 14px;
 }
 
 .td_accept-btn:hover {
-  background-color: #45a049;
+  background: #059669;
 }
 
 .td_reject-btn {
-  background-color: #f44336;
+  background: #ef4444;
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  padding: 8px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  font-size: 14px;
 }
 
 .td_reject-btn:hover {
-  background-color: #d32f2f;
+  background: #dc2626;
 }
 
-.request-badge {
-  background-color: #f44336;
+.td_members-section h3 {
+  font-size: 1.2rem;
+  color: #e5e7eb;
+  margin-bottom: 16px;
+}
+
+.td_members-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.td_member-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #374151;
+  border: 1px solid #4b5563;
+  border-radius: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.td_member-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border-color: #6b7280;
+}
+
+.td_role {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.td_role.td_owner {
+  background: #451a03;
+  color: #fbbf24;
+  border: 1px solid #92400e;
+}
+
+.td_role.td_admin {
+  background: #581c87;
+  color: #c4b5fd;
+  border: 1px solid #7c3aed;
+}
+
+.td_role.td_member {
+  background: #1e3a8a;
+  color: #93c5fd;
+  border: 1px solid #3730a3;
+}
+
+/* Chat Tab Styles */
+.td_chat-tab {
+  height: 600px;
+  display: flex;
+  flex-direction: column;
+}
+
+.td_chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.td_chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #475569;
+  margin-bottom: 16px;
+}
+
+.td_chat-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0;
+}
+
+.td_online-members {
+  background: #064e3b;
+  color: #34d399;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #059669;
+}
+
+.td_chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 450px;
+}
+
+.td_chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.td_chat-messages::-webkit-scrollbar-track {
+  background: #374151;
+  border-radius: 3px;
+}
+
+.td_chat-messages::-webkit-scrollbar-thumb {
+  background: #6b7280;
+  border-radius: 3px;
+}
+
+.td_chat-messages::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.td_chat-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #9ca3af;
+}
+
+.td_no-messages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+}
+
+.td_empty-chat {
+  text-align: center;
+}
+
+.td_empty-chat h3 {
+  color: #9ca3af;
+  margin-bottom: 8px;
+}
+
+.td_empty-chat p {
+  color: #6b7280;
+}
+
+.td_message {
+  display: flex;
+  gap: 12px;
+  max-width: 100%;
+}
+
+.td_message-current-user {
+  flex-direction: row-reverse;
+}
+
+.td_message-current-user .td_message-content {
+  align-items: flex-end;
+}
+
+.td_message-current-user .td_message-bubble {
+  background: #3b82f6;
   color: white;
+}
+
+.td_message-avatar {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  padding: 0.1rem 0.5rem;
-  font-size: 0.8rem;
-  margin-left: 0.5rem;
+  overflow: hidden;
+  flex-shrink: 0;
+  align-self: flex-end;
+  border: 1px solid #4b5563;
+}
+
+.td_message-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.td_message-avatar .td_avatar-placeholder {
+  font-size: 14px;
+}
+
+.td_message-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 70%;
+}
+
+.td_message-sender {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e5e7eb;
+  margin-bottom: 2px;
+}
+
+.td_message-username {
+  font-weight: 400;
+  color: #9ca3af;
+  margin-left: 4px;
+}
+
+.td_message-bubble {
+  background: #374151;
+  padding: 12px 16px;
+  border-radius: 18px;
+  position: relative;
+  word-wrap: break-word;
+  border: 1px solid #4b5563;
+}
+
+.td_message-current-user .td_message-bubble {
+  border-bottom-right-radius: 4px;
+  border-color: #3b82f6;
+}
+
+.td_message-other-user .td_message-bubble {
+  border-bottom-left-radius: 4px;
+}
+
+.td_message-bubble p {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #e2e8f0;
+}
+
+.td_message-current-user .td_message-bubble p {
+  color: white;
+}
+
+.td_message-time {
+  font-size: 11px;
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+.td_chat-input-form {
+  margin-top: 16px;
+  border-top: 1px solid #475569;
+  padding-top: 16px;
+}
+
+.td_chat-input-container {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.td_chat-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #4b5563;
+  border-radius: 24px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  background: #374151;
+  color: #f9fafb;
+}
+
+.td_chat-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.td_chat-input::placeholder {
+  color: #9ca3af;
+}
+
+.td_send-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.td_send-btn:hover:not(:disabled) {
+  background: #2563eb;
+  transform: scale(1.05);
+}
+
+.td_send-btn:disabled {
+  background: #6b7280;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Loading and Error States */
+.td_loading, .td_error, .td_not-found, .td_no-access {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  padding: 40px;
+  color: #e2e8f0;
+}
+
+.td_loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #374151;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.td_error h2, .td_not-found h2, .td_no-access h2 {
+  color: #ef4444;
+  margin-bottom: 8px;
+}
+
+.td_back-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 16px;
+  transition: background 0.2s;
+}
+
+.td_back-btn:hover {
+  background: #2563eb;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .td_team-detail-container {
+    padding: 16px;
+    padding-top: 90px;
+  }
+  
+  .td_problems-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+  
+  .td_members-list {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .td_team-detail-container {
+    padding: 12px;
+    padding-top: 80px;
+  }
+  
+  .td_team-header {
+    padding: 16px;
+  }
+  
+  .td_team-header h1 {
+    font-size: 2rem;
+  }
+  
+  .td_team-meta {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .td_team-tabs {
+    flex-direction: column;
+    gap: 2px;
+    padding: 2px;
+  }
+  
+  .td_tab-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  
+  .td_tab-content {
+    padding: 16px;
+  }
+  
+  .td_problems-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .td_members-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .td_chat-tab {
+    height: 500px;
+  }
+  
+  .td_chat-messages {
+    max-height: 350px;
+  }
+  
+  .td_message-content {
+    max-width: 85%;
+  }
+  
+  .td_request-item {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .td_request-actions {
+    justify-content: flex-end;
+  }
+  
+  .td_invite-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .td_invite-section .td_invite-btn {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .td_team-detail-container {
+    padding: 8px;
+    padding-top: 70px;
+  }
+  
+  .td_team-header {
+    padding: 12px;
+  }
+  
+  .td_team-header h1 {
+    font-size: 1.75rem;
+  }
+  
+  .td_tab-content {
+    padding: 12px;
+  }
+  
+  .td_chat-tab {
+    height: 450px;
+  }
+  
+  .td_chat-messages {
+    max-height: 300px;
+  }
+  
+  .td_problems-grid {
+    gap: 12px;
+  }
+  
+  .td_problem-card {
+    padding: 16px;
+  }
+  
+  .td_member-card {
+    padding: 12px;
+  }
+  
+  .td_form-group input,
+  .td_form-group textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+/* Additional mobile-specific improvements */
+@media (max-width: 640px) {
+  .td_team-meta {
+    gap: 6px;
+  }
+  
+  .td_meta-item {
+    font-size: 13px;
+    padding: 4px 8px;
+  }
+  
+  .td_team-type {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+  
+  .td_problem-header {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  
+  .td_problem-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  
+  .td_chat-input-container {
+    gap: 8px;
+  }
+  
+  .td_send-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .td_team-detail-container {
+    background: #000;
+  }
+  
+  .td_team-header,
+  .td_tab-content,
+  .td_team-tabs {
+    background: #111;
+    border: 2px solid #fff;
+  }
+  
+  .td_problem-card,
+  .td_member-card,
+  .td_request-item {
+    border: 2px solid #666;
+  }
+  
+  .td_tab-btn.td_active {
+    border: 2px solid #fff;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .td_back-button,
+  .td_tab-btn,
+  .td_problem-card,
+  .td_member-card,
+  .td_solve-btn,
+  .td_send-btn {
+    transition: none;
+  }
+  
+  .td_back-button:hover {
+    transform: none;
+  }
+  
+  .td_problem-card:hover,
+  .td_member-card:hover {
+    transform: none;
+  }
+  
+  .td_send-btn:hover:not(:disabled) {
+    transform: none;
+  }
+  
+  .td_loading-spinner {
+    animation: none;
+  }
+}
+
+/* Focus styles for accessibility */
+.td_back-button:focus,
+.td_tab-btn:focus,
+.td_invite-btn:focus,
+.td_add-problem-btn:focus,
+.td_add-first-problem-btn:focus,
+.td_submit-btn:focus,
+.td_cancel-btn:focus,
+.td_solve-btn:focus,
+.td_accept-btn:focus,
+.td_reject-btn:focus,
+.td_send-btn:focus,
+.td_back-btn:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.td_form-group input:focus,
+.td_form-group textarea:focus,
+.td_chat-input:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 1px;
+}
+
+/* Print styles */
+@media print {
+  .td_team-detail-container {
+    background: white;
+    color: black;
+    padding-top: 20px;
+  }
+  
+  .td_team-header,
+  .td_tab-content {
+    background: white;
+    border: 1px solid #000;
+    box-shadow: none;
+  }
+  
+  .td_team-tabs,
+  .td_chat-tab,
+  .td_problem-actions,
+  .td_request-actions,
+  .td_team-actions {
+    display: none;
+  }
+  
+  .td_problem-card,
+  .td_member-card {
+    break-inside: avoid;
+    background: white;
+    border: 1px solid #000;
+  }
+}
+
+/* Dark scrollbar for webkit browsers */
+.td_team-detail-container ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.td_team-detail-container ::-webkit-scrollbar-track {
+  background: #1e293b;
+  border-radius: 4px;
+}
+
+.td_team-detail-container ::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+.td_team-detail-container ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.td_team-detail-container ::-webkit-scrollbar-corner {
+  background: #1e293b;
+}
+
+/* Selection styles */
+::selection {
+  background: #3b82f6;
+  color: white;
+}
+
+::-moz-selection {
+  background: #3b82f6;
+  color: white;
 }

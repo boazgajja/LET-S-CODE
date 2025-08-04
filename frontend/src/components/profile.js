@@ -17,6 +17,7 @@ const ProfilePage = () => {
 
   // Redirect if not logged in
   useEffect(() => {
+    // User data is available in the component
     if (!user) {
       navigate('/');
       return;
@@ -98,6 +99,8 @@ const ProfilePage = () => {
   };
 
   const formatTimeAgo = (timestamp) => {
+    if (!timestamp) return 'Unknown';
+    
     const now = new Date();
     const submittedTime = new Date(timestamp);
     const diffInHours = Math.floor((now - submittedTime) / (1000 * 60 * 60));
@@ -190,7 +193,7 @@ const ProfilePage = () => {
                 <div className="p_profile-stats">
                   <div className="p_stat-card">
                     <h3>Problems Solved</h3>
-                    <div className="p_stat-value">{user.stats?.solvedProblems || 0}</div>
+                    <div className="p_stat-value">{user.stats?.problemsSolved || 0}</div>
                   </div>
                   <div className="p_stat-card">
                     <h3>Acceptance Rate</h3>
@@ -266,14 +269,16 @@ const ProfilePage = () => {
               </div>
             )}
 
+            {/* In the submissions tab section */}
             {activeTab === 'submissions' && (
               <div className="p_submissions-tab">
                 <div className="p_submissions-header">
-                  <h3>Your Submissions</h3>
+                  <h3>Your Recent Submissions</h3>
+                  <Link to="/submissions" className="p_view-all-btn">View All Submissions</Link>
                 </div>
                 {user.submissions && user.submissions.length > 0 ? (
                   <div className="p_submissions-list">
-                    {user.submissions.map((submission, index) => (
+                    {user.submissions.slice(0, 10).map((submission, index) => (
                       <div key={index} className="p_submission-item">
                         <div className="p_submission-problem">
                           <Link to={`/problem/${submission.problemId}`}>{submission.problemTitle}</Link>
@@ -286,10 +291,18 @@ const ProfilePage = () => {
                             {submission.status}
                           </span>
                           <span className="p_submission-language">{submission.language}</span>
-                          <span className="p_submission-time">{formatTimeAgo(submission.timestamp)}</span>
+                          <span className="p_submission-time">{formatTimeAgo(submission.createdAt)}</span>
+                          <Link to={`/submissions/${submission.submissionId}`} className="p_view-submission-btn">
+                            View
+                          </Link>
                         </div>
                       </div>
                     ))}
+                    {user.submissions.length > 10 && (
+                      <div className="p_more-submissions">
+                        <Link to="/submissions" className="p_more-link">View all {user.submissions.length} submissions</Link>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="p_empty-state">
@@ -298,7 +311,7 @@ const ProfilePage = () => {
                   </div>
                 )}
               </div>
-            )}
+            )};
 
             {activeTab === 'settings' && (
               <div className="p_settings-tab">

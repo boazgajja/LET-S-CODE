@@ -94,21 +94,15 @@ router.post('/friends/add', authenticateToken, async (req, res) => {
       });
     }
 
-    // Add friend to user's friends list with pending status
-    user.friends.push({
-      user: friend._id,
-      status: 'pending'
-    });
-
-    await user.save();
-
-    // Add user to friend's friends list with pending status
-    friend.friends.push({
-      user: userId,
-      status: 'pending'
-    });
-
-    await friend.save();
+    // Add friend request to friend's friends list (they will receive the request)
+    const existingRequest = friend.friends.find(f => f.user.toString() === userId);
+    if (!existingRequest) {
+      friend.friends.push({
+        user: userId,
+        status: 'pending'
+      });
+      await friend.save();
+    }
 
     res.status(200).json({
       success: true,
@@ -144,13 +138,18 @@ router.put('/friends/:friendId/accept', authenticateToken, async (req, res) => {
     friendRequest.status = 'accepted';
     await user.save();
 
-    // Update status in friend's friends list
+    // Add user to friend's friends list with accepted status
     const friend = await User.findById(friendId);
-    const userRequest = friend.friends.find(f => f.user.toString() === userId);
-    if (userRequest) {
-      userRequest.status = 'accepted';
-      await friend.save();
+    const existingFriend = friend.friends.find(f => f.user.toString() === userId);
+    if (existingFriend) {
+      existingFriend.status = 'accepted';
+    } else {
+      friend.friends.push({
+        user: userId,
+        status: 'accepted'
+      });
     }
+    await friend.save();
 
     res.status(200).json({
       success: true,
@@ -161,6 +160,65 @@ router.put('/friends/:friendId/accept', authenticateToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to accept friend request',
+      error: error.message
+    });
+  }
+});
+
+// Reject friend request
+router.put('/friends/:friendId/reject', authenticateToken, async (req, res) => {
+  try {
+    const { friendId } = req.params;
+    const userId = req.user.userId;
+
+    // Remove friend request from user's friends list
+    const user = await User.findById(userId);
+    user.friends = user.friends.filter(f => 
+      !(f.user.toString() === friendId && f.status === 'pending')
+    );
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Friend request rejected'
+    });
+  } catch (error) {
+    console.error('Reject friend request error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reject friend request',
+      error: error.message
+    });
+  }
+});
+
+// Remove friend
+router.delete('/friends/:friendId', authenticateToken, async (req, res) => {
+  try {
+    const { friendId } = req.params;
+    const userId = req.user.userId;
+
+    // Remove friend from user's friends list
+    const user = await User.findById(userId);
+    user.friends = user.friends.filter(f => f.user.toString() !== friendId);
+    await user.save();
+
+    // Remove user from friend's friends list
+    const friend = await User.findById(friendId);
+    if (friend) {
+      friend.friends = friend.friends.filter(f => f.user.toString() !== userId);
+      await friend.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Friend removed successfully'
+    });
+  } catch (error) {
+    console.error('Remove friend error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to remove friend',
       error: error.message
     });
   }
@@ -189,6 +247,44 @@ router.get('/friends', authenticateToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get friends',
+      error: error.message
+    });
+  }
+});
+
+// Get online friends
+router.get('/friends/online', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Get accepted friends
+    const acceptedFriendIds = user.friends
+      .filter(friend => friend.status === 'accepted')
+      .map(friend => friend.user);
+
+    // Find online friends
+    const onlineFriends = await User.find({
+      _id: { $in: acceptedFriendIds },
+      isOnline: true
+    }).select('username profile.firstName profile.lastName profile.avatar isOnline lastActive');
+
+    res.status(200).json({
+      success: true,
+      data: onlineFriends
+    });
+  } catch (error) {
+    console.error('Get online friends error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get online friends',
       error: error.message
     });
   }

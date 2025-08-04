@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LetsCode from './components/Letscode';
 import Problem from './components/problem';
@@ -8,79 +8,203 @@ import Teams from './components/Teams';
 import TeamDetail from './components/TeamDetail';
 import Friends from './components/Friends';
 import AddProblem from './components/AddProblem';
+import Submissions from './components/Submissions';
+// Remove these imports
+// import TeamWars from './components/TeamWars';
+// import TeamWarDetail from './components/TeamWarDetail';
 import Navbar from './components/Navbar';
 import { DataProvider } from './context/datacontext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/themeContext';
+import { SocketProvider } from './context/SocketContext';
 import './styles/global.css';
 
-export default function App() {
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+// Helper component to protect authenticated routes
+function RequireAuth({ children }) {
+  const { isAuthenticated, isLoading } = useAuth();
   
-  useEffect(() => {
-    // Check if user is stored in localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      const userData = JSON.parse(storedUser);
-      setUser(userData);
-      setIsAuthenticated(true);
-    }
-  }, []);
+  if (isLoading) {
+    return <div className="app-loading">Loading...</div>;
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return children;
+}
 
-  // Layout component for authenticated pages
-  const AuthenticatedLayout = ({ children }) => (
-    <>
-      <Navbar />
-      {children}
-    </>
+// Helper component to protect public routes (redirect authenticated users)
+function PublicRoute({ children }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return <div className="app-loading">Loading...</div>;
+  }
+  
+  // If user is authenticated, redirect to problems page instead of staying on landing
+  if (isAuthenticated) {
+    return <Navigate to="/problem" replace />;
+  }
+  
+  return children;
+}
+
+// Layout component for authenticated pages
+const AuthenticatedLayout = ({ children }) => (
+  <>
+    <Navbar />
+    {children}
+  </>
+);
+
+function AppContent() {
+  return (
+    <Router>
+      <div className="app">
+        <Routes>
+          {/* Public Routes - Landing/Login */}
+          <Route 
+            path="/" 
+            element={
+              <PublicRoute>
+                <Landing />
+              </PublicRoute>
+            } 
+          />
+          
+          {/* Protected Routes */}
+          <Route 
+            path="/problem" 
+            element={
+              <RequireAuth>
+                <AuthenticatedLayout>
+                  <LetsCode />
+                </AuthenticatedLayout>
+              </RequireAuth>
+            } 
+          />
+          
+          <Route 
+            path="/problem/:id" 
+            element={
+              <RequireAuth>
+                <AuthenticatedLayout>
+                  <Problem />
+                </AuthenticatedLayout>
+              </RequireAuth>
+            } 
+          />
+          
+          <Route 
+            path="/profile" 
+            element={
+              <RequireAuth>
+                <AuthenticatedLayout>
+                  <Profile />
+                </AuthenticatedLayout>
+              </RequireAuth>
+            } 
+          />
+          
+          <Route 
+            path="/profile/:username" 
+            element={
+              <RequireAuth>
+                <AuthenticatedLayout>
+                  <Profile />
+                </AuthenticatedLayout>
+              </RequireAuth>
+            } 
+          />
+          
+          <Route 
+            path="/teams" 
+            element={
+              <RequireAuth>
+                <AuthenticatedLayout>
+                  <Teams />
+                </AuthenticatedLayout>
+              </RequireAuth>
+            } 
+          />
+          
+          <Route 
+            path="/teams/:id" 
+            element={
+              <RequireAuth>
+                <AuthenticatedLayout>
+                  <TeamDetail />
+                </AuthenticatedLayout>
+              </RequireAuth>
+            } 
+          />
+          
+          <Route 
+            path="/friends" 
+            element={
+              <RequireAuth>
+                <AuthenticatedLayout>
+                  <Friends />
+                </AuthenticatedLayout>
+              </RequireAuth>
+            } 
+          />
+          
+          <Route 
+            path="/add-problem" 
+            element={
+              <RequireAuth>
+                <AuthenticatedLayout>
+                  <AddProblem />
+                </AuthenticatedLayout>
+              </RequireAuth>
+            } 
+          />
+          
+          <Route 
+            path="/submissions" 
+            element={
+              <RequireAuth>
+                <AuthenticatedLayout>
+                  <Submissions />
+                </AuthenticatedLayout>
+              </RequireAuth>
+            } 
+          />
+          
+          <Route 
+            path="/submissions/:submissionId" 
+            element={
+              <RequireAuth>
+                <AuthenticatedLayout>
+                  <Submissions />
+                </AuthenticatedLayout>
+              </RequireAuth>
+            } 
+          />
+          
+         
+          <Route 
+            path="*" 
+            element={<Navigate to="/" replace />} 
+          />
+        </Routes>
+      </div>
+    </Router>
   );
+}
 
+export default function App() {
   return (
     <ThemeProvider>
-      <DataProvider>
-        <Router>
-          <div className="app">
-            <Routes>
-              <Route path="/problem" element={
-                isAuthenticated ? 
-                <AuthenticatedLayout><LetsCode /></AuthenticatedLayout> : 
-                <Navigate to="/" />
-              } />
-              <Route path="/problem/:id" element={
-                isAuthenticated ? 
-                <AuthenticatedLayout><Problem /></AuthenticatedLayout> : 
-                <Navigate to="/" />
-              } />
-              <Route path="/" element={<Landing />} />
-              <Route path="/profile" element={
-                isAuthenticated ? 
-                <AuthenticatedLayout><Profile /></AuthenticatedLayout> : 
-                <Navigate to="/" />
-              } />
-              <Route path="/teams" element={
-                isAuthenticated ? 
-                <AuthenticatedLayout><Teams /></AuthenticatedLayout> : 
-                <Navigate to="/" />
-              } />
-              <Route path="/teams/:teamId" element={
-                isAuthenticated ? 
-                <AuthenticatedLayout><TeamDetail /></AuthenticatedLayout> : 
-                <Navigate to="/" />
-              } />
-              <Route path="/friends" element={
-                isAuthenticated ? 
-                <AuthenticatedLayout><Friends /></AuthenticatedLayout> : 
-                <Navigate to="/" />
-              } />
-              <Route path="/add-problem" element={
-                isAuthenticated ? 
-                <AuthenticatedLayout><AddProblem /></AuthenticatedLayout> : 
-                <Navigate to="/" />
-              } />
-            </Routes>
-          </div>
-        </Router>
-      </DataProvider>
+      <AuthProvider>
+        <SocketProvider>
+          <DataProvider>
+            <AppContent />
+          </DataProvider>
+        </SocketProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

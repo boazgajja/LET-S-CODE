@@ -10,9 +10,10 @@ const { deleteProblemFromList } = require('../dbconnections/delete');
 // Get all problems from problem list (for home page)
 router.get('/problemlist', async (req, res) => {
     try {
+        
         // console.log('Fetching problem list...be');
         const problems = await getproblemlist();
-        console.log('Fetched problems:', problems.length);
+        // console.log('Fetched problems:', problems.length);
         // console.log(problems);
         res.status(200).json({
             success: true,

@@ -4,7 +4,7 @@ const User = require('../models/User');
 // JWT configuration
 const JWT_SECRET = process.env.JWT_SECRET || 'boaz@0099';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-super-secret-refresh-key-change-this-in-production';
-const JWT_EXPIRE = process.env.JWT_EXPIRE || '15m'; // Access token expires in 15 minutes
+const JWT_EXPIRE = process.env.JWT_EXPIRE || '24h'; // Access token expires in 15 minutes
 const JWT_REFRESH_EXPIRE = process.env.JWT_REFRESH_EXPIRE || '7d'; // Refresh token expires in 7 days
 
 /**

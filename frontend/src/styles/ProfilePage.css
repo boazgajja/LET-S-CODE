@@ -373,8 +373,8 @@
 .p_section-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+  align-items: flex-start;
+  gap: 24px;
 }
 
 .p_section-header h3 {
@@ -700,35 +700,57 @@
   font-size: 12px;
 }
 
+/* Add these styles to your existing ProfilePage.css */
 .p_submissions-header {
-  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
-.p_submissions-header h3 {
-  margin: 0;
-  color: #ffffff;
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.p_submission-problem a {
-  color: #6366f1;
+.p_view-all-btn {
+  padding: 0.5rem 1rem;
+  background-color: var(--primary);
+  color: white;
+  border-radius: 4px;
   text-decoration: none;
-  font-weight: 500;
+  font-size: 0.875rem;
+  transition: background-color 0.2s;
 }
 
-.p_submission-problem a:hover {
+.p_view-all-btn:hover {
+  background-color: var(--primary-dark);
+}
+
+.p_view-submission-btn {
+  padding: 0.25rem 0.5rem;
+  background-color: #333;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.75rem;
+  transition: background-color 0.2s;
+}
+
+.p_view-submission-btn:hover {
+  background-color: var(--primary);
+}
+
+.p_more-submissions {
+  text-align: center;
+  padding: 1rem;
+  border-top: 1px solid #333;
+}
+
+.p_more-link {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.p_more-link:hover {
   text-decoration: underline;
 }
 
-.p_submission-details {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  font-size: 14px;
-}
-
-/* Settings Content */
 .p_settings-content {
   max-width: 800px;
 }

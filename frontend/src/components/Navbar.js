@@ -1,6 +1,9 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Code, Plus } from 'lucide-react';
+// Remove Swords from the imports
+// import { Code, User, Users, BookOpen, FileText, Plus, UserPlus, Swords } from 'lucide-react';
+import { Code, User, Users, BookOpen, FileText, Plus, UserPlus } from 'lucide-react';
+              
 import { useDataContext } from '../context/datacontext';
 import { useTheme } from '../context/themeContext';
 import '../styles/home.css';
@@ -30,14 +33,36 @@ const Navbar = ({ hideProfileImage = false }) => {
                 to="/problem" 
                 className={`lc-nav-link ${location.pathname === '/problem' ? 'lc-nav-link-active' : ''}`}
               >
-                Problems
+                <BookOpen size={18} />
+                <span>Problems</span>
               </Link>
               <Link 
                 to="/add-problem" 
-                className={`lc-nav-link lc-nav-link-add ${location.pathname === '/add-problem' ? 'lc-nav-link-active' : ''}`}
+                className={`lc-nav-link ${location.pathname === '/add-problem' ? 'lc-nav-link-active' : ''}`}
               >
-                <Plus className="lc-plus-icon" />
+                <Plus size={18} />
                 <span>Add Problem</span>
+              </Link>
+              <Link 
+                to="/submissions" 
+                className={`lc-nav-link ${location.pathname === '/submissions' ? 'lc-nav-link-active' : ''}`}
+              >
+                <FileText size={18} />
+                <span>Submissions</span>
+              </Link>
+              <Link 
+                to="/teams" 
+                className={`lc-nav-link ${location.pathname.startsWith('/teams') ? 'lc-nav-link-active' : ''}`}
+              >
+                <Users size={18} />
+                <span>Teams</span>
+              </Link>
+              <Link 
+                to="/friends" 
+                className={`lc-nav-link ${location.pathname === '/friends' ? 'lc-nav-link-active' : ''}`}
+              >
+                <UserPlus size={18} />
+                <span>Friends</span>
               </Link>
             </div>
           </div>

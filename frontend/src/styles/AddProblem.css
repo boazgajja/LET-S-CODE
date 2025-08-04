@@ -163,3 +163,181 @@
   color: #999;
   cursor: not-allowed;
 }
+
+
+/* Add these styles to your existing AddProblem.css file */
+
+.ap_mode-toggle {
+  display: flex;
+  margin-bottom: 2rem;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ap_mode-btn {
+  flex: 1;
+  padding: 0.75rem;
+  background-color: #2a2a2a;
+  border: none;
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.ap_mode-btn.active {
+  background-color: #3a3a3a;
+  font-weight: bold;
+}
+
+.ap_json-container {
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.ap_json-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.ap_template-btn {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.ap_template-btn:hover {
+  background-color: #3a3a3a;
+}
+
+.ap_json-input {
+  width: 100%;
+  min-height: 300px;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  padding: 1rem;
+  font-family: monospace;
+  resize: vertical;
+}
+
+.ap_json-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ap_parse-btn {
+  background-color: #4a4a4a;
+  color: #e0e0e0;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.ap_parse-btn:hover {
+  background-color: #5a5a5a;
+}
+
+.ap_json-help {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #2a2a2a;
+  border-radius: 4px;
+}
+
+.ap_schema-display {
+  background-color: #1a1a1a;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow: auto;
+  max-height: 300px;
+  color: #a0a0a0;
+  font-size: 0.9rem;
+}
+
+
+/* User Added Problems Section */
+.ap_user-problems-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: #252525;
+  border-radius: 4px;
+  border: 1px solid #444;
+}
+
+.ap_user-problems-section h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+}
+
+.ap_user-problems-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ap_user-problem-card {
+  padding: 1rem;
+  background-color: #333;
+  border-radius: 4px;
+  border: 1px solid #444;
+}
+
+.ap_user-problem-info h4 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: #e0e0e0;
+}
+
+.ap_user-problem-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ap_solved-count {
+  font-size: 0.9rem;
+  color: #a0a0a0;
+}
+
+.ap_removal-warning {
+  font-size: 0.9rem;
+  color: #ff6b6b;
+}
+
+/* Floating Action Button */
+.ap_floating-action-button {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #4263eb;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+  z-index: 1000;
+}
+
+.ap_floating-action-button:hover {
+  background-color: #364fc7;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}

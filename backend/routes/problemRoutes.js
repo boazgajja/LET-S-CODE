@@ -1,209 +1,195 @@
 const express = require('express');
 const router = express.Router();
-
-// Import service functions
+const Problem = require('./../models/Problem');
+const PendingProblem = require('./../models/PendingProblem'); // Add this line
+const { authenticateToken } = require('../utils/jwt');
 const {
-    getAllProblems,
-    getProblemById,
-    getProblemBySlug,
-    getProblemsByDifficulty,
-    getProblemsWithPagination
+  getAllProblems,
+  getProblemById,
+  getProblemBySlug,
+  getProblemsByDifficulty,
+  getProblemsWithPagination
 } = require('../dbconnections/fetch');
-
 const { insertProblem } = require('../dbconnections/insert');
 const { updateProblem } = require('../dbconnections/update');
 const { deleteProblem } = require('../dbconnections/delete');
 
-// Get all problems with optional pagination
+// Get all problems, with optional pagination
 router.get('/problems', async (req, res) => {
-    try {
-        const { page, limit } = req.query;
-        
-        let result;
-        if (page || limit) {
-            // Use pagination if page or limit is provided
-            const pageNum = parseInt(page) || 1;
-            const limitNum = parseInt(limit) || 10;
-            result = await getProblemsWithPagination(pageNum, limitNum);
-            
-            res.status(200).json({
-                success: true,
-                data: result.problems,
-                pagination: result.pagination
-            });
-        } else {
-            // Get all problems without pagination
-            const problems = await getAllProblems();
-            res.status(200).json({
-                success: true,
-                count: problems.length,
-                data: problems
-            });
-        }
-    } catch (error) {
-        console.error('Error fetching problems:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching problems',
-            error: error.message
-        });
+  try {
+    const { page, limit } = req.query;
+    if (page || limit) {
+      const result = await getProblemsWithPagination(parseInt(page) || 1, parseInt(limit) || 10);
+      res.status(200).json({ success: true, data: result.problems, pagination: result.pagination });
+    } else {
+      const problems = await getAllProblems();
+      res.status(200).json({ success: true, count: problems.length, data: problems });
     }
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching problems', error: error.message });
+  }
 });
 
-// Get problem by ID (when user clicks on a question)
+// Get problem by ID
 router.get('/problems/pid/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        
-        console.log("hi this is getProblemById before calling service");
-        const problem = await getProblemById(id);
-        
-        console.log("hi this is getProblemById after calling service");
-        console.log(problem);
-        console.log('Problem fetched by ID:', problem);
-        
-        if (!problem) {
-            return res.status(404).json({
-                success: false,
-                message: 'Problem not found'
-            });
-        }
-        
-        res.status(200).json({
-            success: true,
-            data: problem
-        });
-    } catch (error) {
-        console.error('Error fetching problem by ID:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching problem by ID',
-            error: error.message
-        });
-    }
+  try {
+    const { id } = req.params;
+    const problem = await getProblemById(id);
+    if (!problem) return res.status(404).json({ success: false, message: 'Problem not found' });
+    res.status(200).json({ success: true, data: problem });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching problem by ID', error: error.message });
+  }
 });
 
 // Get problem by slug
 router.get('/problems/slug/:slug', async (req, res) => {
-    try {
-        const { slug } = req.params;
-        const problem = await getProblemBySlug(slug);
-        
-        if (!problem) {
-            return res.status(404).json({
-                success: false,
-                message: 'Problem not found'
-            });
-        }
-        
-        res.status(200).json({
-            success: true,
-            data: problem
-        });
-    } catch (error) {
-        console.error('Error fetching problem by slug:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching problem by slug',
-            error: error.message
-        });
-    }
+  try {
+    const { slug } = req.params;
+    const problem = await getProblemBySlug(slug);
+    if (!problem) return res.status(404).json({ success: false, message: 'Problem not found' });
+    res.status(200).json({ success: true, data: problem });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching problem by slug', error: error.message });
+  }
 });
 
 // Get problems by difficulty
 router.get('/problems/difficulty/:difficulty', async (req, res) => {
-    try {
-        const { difficulty } = req.params;
-        const problems = await getProblemsByDifficulty(difficulty);
-        
-        res.status(200).json({
-            success: true,
-            count: problems.length,
-            data: problems
-        });
-    } catch (error) {
-        console.error('Error fetching problems by difficulty:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching problems by difficulty',
-            error: error.message
-        });
-    }
+  try {
+    const problems = await getProblemsByDifficulty(req.params.difficulty);
+    res.status(200).json({ success: true, count: problems.length, data: problems });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching problems by difficulty', error: error.message });
+  }
 });
 
-// Create new problem
-router.post('/problems', async (req, res) => {
-    try {
-        const newProblem = await insertProblem(req.body);
-        res.status(201).json({
-            success: true,
-            message: 'Problem created successfully',
-            data: newProblem
-        });
-    } catch (error) {
-        console.error('Error creating problem:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error creating problem',
-            error: error.message
-        });
-    }
+// Create new problem (now creates a pending problem)
+router.post('/problems', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    // Create a new pending problem instead of a regular problem
+    const pendingProblemData = {
+      ...req.body,
+      addedBy: userId,
+      solvedBy: [] // Initialize empty solvedBy array
+    };
+    
+    const newPendingProblem = new PendingProblem(pendingProblemData);
+    await newPendingProblem.save();
+    
+    res.status(201).json({ 
+      success: true, 
+      message: 'Problem submitted successfully. It will be added to the main problem list after 20+ submissions.', 
+      data: newPendingProblem 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error creating problem', error: error.message });
+  }
 });
 
-// Update problem by ID
+// Get user-added pending problems
+router.get('/problems/user-added', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const pendingProblems = await PendingProblem.find({ addedBy: userId });
+    res.status(200).json({ success: true, count: pendingProblems.length, data: pendingProblems });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching user-added problems', error: error.message });
+  }
+});
+
+// Mark a pending problem as solved by a user
+router.post('/problems/pending/:id/solve', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const problemId = req.params.id;
+    
+    const pendingProblem = await PendingProblem.findById(problemId);
+    if (!pendingProblem) {
+      return res.status(404).json({ success: false, message: 'Problem not found' });
+    }
+    
+    // Check if user has already solved this problem
+    if (pendingProblem.solvedBy.includes(userId)) {
+      return res.status(400).json({ success: false, message: 'You have already solved this problem' });
+    }
+    
+    // Add user to solvedBy array
+    pendingProblem.solvedBy.push(userId);
+    await pendingProblem.save();
+    
+    // Check if problem has reached 20+ solves
+    if (pendingProblem.solvedBy.length >= 20) {
+      // Convert pending problem to regular problem
+      const newProblem = await insertProblem({
+        title: pendingProblem.title,
+        difficulty: pendingProblem.difficulty,
+        description: pendingProblem.description,
+        inputFormat: pendingProblem.inputFormat,
+        outputFormat: pendingProblem.outputFormat,
+        examples: pendingProblem.examples,
+        constraints: pendingProblem.constraints,
+        tags: pendingProblem.tags,
+        testCases: pendingProblem.testCases,
+        solution: pendingProblem.solution,
+        solvedBy: pendingProblem.solvedBy
+      }, pendingProblem.addedBy);
+      
+      // Delete the pending problem
+      await PendingProblem.findByIdAndDelete(problemId);
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Problem solved and added to main problem list!', 
+        data: newProblem 
+      });
+    }
+    
+    res.status(200).json({ 
+      success: true, 
+      message: `Problem solved! ${20 - pendingProblem.solvedBy.length} more solves needed to add to main list.`, 
+      data: pendingProblem 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error marking problem as solved', error: error.message });
+  }
+});
+
+// Get problems by current user
+router.get('/my-problems', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const problems = await Problem.find({ addedBy: userId });
+    res.status(200).json({ success: true, count: problems.length, data: problems });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching user problems', error: error.message });
+  }
+});
+
+// Update problem
 router.put('/problems/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const updatedProblem = await updateProblem(id, req.body);
-        
-        if (!updatedProblem) {
-            return res.status(404).json({
-                success: false,
-                message: 'Problem not found'
-            });
-        }
-        
-        res.status(200).json({
-            success: true,
-            message: 'Problem updated successfully',
-            data: updatedProblem
-        });
-    } catch (error) {
-        console.error('Error updating problem:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error updating problem',
-            error: error.message
-        });
-    }
+  try {
+    const { id } = req.params;
+    const updatedProblem = await updateProblem(id, req.body);
+    if (!updatedProblem) return res.status(404).json({ success: false, message: 'Problem not found' });
+    res.status(200).json({ success: true, message: 'Problem updated successfully', data: updatedProblem });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error updating problem', error: error.message });
+  }
 });
 
-// Delete problem by ID
+// Delete problem
 router.delete('/problems/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const deletedProblem = await deleteProblem(id);
-        
-        if (!deletedProblem) {
-            return res.status(404).json({
-                success: false,
-                message: 'Problem not found'
-            });
-        }
-        
-        res.status(200).json({
-            success: true,
-            message: 'Problem deleted successfully',
-            data: deletedProblem
-        });
-    } catch (error) {
-        console.error('Error deleting problem:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error deleting problem',
-            error: error.message
-        });
-    }
+  try {
+    const { id } = req.params;
+    const deletedProblem = await deleteProblem(id);
+    if (!deletedProblem) return res.status(404).json({ success: false, message: 'Problem not found' });
+    res.status(200).json({ success: true, message: 'Problem deleted successfully', data: deletedProblem });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error deleting problem', error: error.message });
+  }
 });
 
 module.exports = router;

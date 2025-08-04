@@ -7,12 +7,7 @@ const MONGODB_URI = 'mongodb+srv://boazgajja:boaz%400099@problemset.ruvpee3.mong
 // Connect to MongoDB database
 const connectDB = async () => {
   try {
-    await mongoose.connect(MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-    });
-
+    await mongoose.connect(MONGODB_URI);
     console.log('✅ Connected to MongoDB successfully!');
 
     // Set up connection event listeners once

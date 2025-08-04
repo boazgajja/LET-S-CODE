@@ -8,8 +8,16 @@ import Navbar from './Navbar';
 
 export default function LetsCode() {
   const { theme } = useTheme();
-  const { user, workingProblems, addWorkingProblem, removeWorkingProblem, teams, fetchTeams } = useDataContext();
-  
+  const {
+    user,
+    workingProblems,
+    fetchWorkingProblems,
+    addWorkingProblem,
+    removeWorkingProblem,
+    teams,
+    fetchTeams
+  } = useDataContext();
+
   const [selectedCategory, setSelectedCategory] = useState('All Topics');
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,7 +25,6 @@ export default function LetsCode() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch problems only once when component mounts
   useEffect(() => {
     const fetchProblems = async () => {
       try {
@@ -30,11 +37,9 @@ export default function LetsCode() {
         let problemsArray = Array.isArray(response_data)
           ? response_data
           : response_data.data || [];
-
         setProblems(problemsArray);
         setError(null);
       } catch (err) {
-        console.error('Error fetching problems:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -42,67 +47,81 @@ export default function LetsCode() {
     };
     fetchTeams();
     fetchProblems();
-  }, []); // Remove workingProblems dependency
+    fetchWorkingProblems();
+  }, []);
 
-  // Memoize the function to check if a problem is marked
-  const isProblemMarked = useCallback((problemId) => {
-    return workingProblems.some(p => p._id === problemId);
-  }, [workingProblems]);
+  // Use question number (problem.id) to check if problem is marked
+  const isProblemMarked = useCallback(
+    (problemId) => workingProblems.some((p) => p.id === problemId),
+    [workingProblems]
+  );
 
-  // Memoize the marked problems count
-  const markedCount = React.useMemo(() => {
-    return problems.filter(problem => isProblemMarked(problem.id)).length;
-  }, [problems, isProblemMarked]);
+  const markedCount = React.useMemo(
+    () => problems.filter((problem) => isProblemMarked(problem.id)).length,
+    [problems, isProblemMarked]
+  );
 
-  // Memoize the filtered problems with marked status
-  const filteredProblems = React.useMemo(() => {
-    return problems.filter(problem => {
-      const matchesSearch = problem.title?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesTopics = selectedTopics.length === 0 || selectedTopics.some(topic => problem.tags?.includes(topic));
-      return matchesSearch && matchesTopics;
-    }).map(problem => ({
-      ...problem,
-      isMarked: isProblemMarked(problem.id)
-    }));
-  }, [problems, searchTerm, selectedTopics, isProblemMarked]);
+  const isProblemSolved = useCallback(
+    (problemId) => user?.stats?.solvedProblems?.some(id => id.toString() === problemId.toString()),
+    [user]
+  );
+
+  const filteredProblems = React.useMemo(
+    () =>
+      problems
+        .filter((problem) => {
+          const matchesSearch = problem.title?.toLowerCase().includes(searchTerm.toLowerCase());
+          const matchesTopics = selectedTopics.length === 0 || selectedTopics.some(topic => problem.tags?.includes(topic));
+          return matchesSearch && matchesTopics;
+        })
+        .map((problem) => ({
+          ...problem,
+          isMarked: isProblemMarked(problem.id),
+          isSolved: isProblemSolved(problem.id),
+        })),
+    [problems, searchTerm, selectedTopics, isProblemMarked, isProblemSolved]
+  );
 
   const getUserInitial = () => {
     return user?.name?.charAt(0).toUpperCase() || 'A';
   };
 
-  const topicCounts = problems.length > 0 ? {
-    'Array': problems.filter(p => p.tags?.includes('Array')).length,
-    'String': problems.filter(p => p.tags?.includes('String')).length,
-    'Hash Table': problems.filter(p => p.tags?.includes('Hash Table')).length,
-    'Dynamic Programming': problems.filter(p => p.tags?.includes('Dynamic Programming')).length,
-    'Math': problems.filter(p => p.tags?.includes('Math')).length,
-    'Linked List': problems.filter(p => p.tags?.includes('Linked List')).length,
-    'Two Pointers': problems.filter(p => p.tags?.includes('Two Pointers')).length,
-    'Binary Search': problems.filter(p => p.tags?.includes('Binary Search')).length,
-  } : {};
+  const topicCounts = problems.length > 0
+    ? {
+        Array: problems.filter(p => p.tags?.includes('Array')).length,
+        String: problems.filter(p => p.tags?.includes('String')).length,
+        'Hash Table': problems.filter(p => p.tags?.includes('Hash Table')).length,
+        'Dynamic Programming': problems.filter(p => p.tags?.includes('Dynamic Programming')).length,
+        Math: problems.filter(p => p.tags?.includes('Math')).length,
+        'Linked List': problems.filter(p => p.tags?.includes('Linked List')).length,
+        'Two Pointers': problems.filter(p => p.tags?.includes('Two Pointers')).length,
+        'Binary Search': problems.filter(p => p.tags?.includes('Binary Search')).length,
+      }
+    : {};
 
-  const toggleProblemMark = useCallback((problemId) => {
-    const problem = problems.find(p => p.id === problemId);
-    if (!problem) return;
+  // Use question number (id) everywhere for working problems
+  const toggleProblemMark = useCallback(
+    (problemId) => {
+      const problem = problems.find((p) => p.id === problemId);
+      if (!problem) return;
 
-    const isMarked = isProblemMarked(problemId);
+      const isMarked = isProblemMarked(problemId);
 
-    if (isMarked) {
-      removeWorkingProblem(problemId);
-    } else {
-      addWorkingProblem({
-        _id: problem.id,
-        id: problem.id,
-        title: problem.title,
-        difficulty: problem.difficulty,
-        status: 'working'
-      });
-    }
-
-    // No need to update local state since we're using memoized values
-    // The component will re-render automatically when workingProblems changes
-    return false;
-  }, [problems, isProblemMarked, addWorkingProblem, removeWorkingProblem]);
+      if (isMarked) {
+        removeWorkingProblem(problemId); // REMOVE BY question number
+      } else {
+        addWorkingProblem({
+          id: problem.id,        // This must be the question number
+          title: problem.title,
+          difficulty: problem.difficulty,
+          acceptance: problem.acceptance,
+          status: 'working',
+        });
+      }
+      return false;
+    },
+    [problems, isProblemMarked, addWorkingProblem, removeWorkingProblem]
+  );
 
   const toggleTopicFilter = (topic) => {
     setSelectedTopics(prev =>
@@ -128,7 +147,7 @@ export default function LetsCode() {
   if (error) {
     return (
       <div className="lc_error-container">
-        <p>Error loading problems: {error}</p>
+        <p>Error loading problems</p>
         <button onClick={() => window.location.reload()}>Retry</button>
       </div>
     );
@@ -137,7 +156,6 @@ export default function LetsCode() {
   return (
     <div className={`lc-app-container ${theme}`}>
       <Navbar />
-
       <div className="lc-main-layout">
         {/* Sidebar */}
         <div className="lc-sidebar hide-scrollbar">
@@ -152,17 +170,18 @@ export default function LetsCode() {
                 {teams.length === 0 ? (
                   <p className="lc-no-teams">No teams yet</p>
                 ) : (
-                  teams.map((team) => (
-                  <Link key={team._id} to={`/teams/${team.team._id}`} className="lc-team-item">
-                    <pre><Users size={16} /> {team.team.name}</pre>
-                    {team.team.joinRequests && team.team.joinRequests.length > 0 && (
-                      <span className="lc-join-request-badge">
-                        {team.team.joinRequests.length}
-                      </span>
-                    )}
-                  </Link>
-                ))
- 
+                  teams.map((team) =>
+                    team.team && team.team._id && team.team.name ? (
+                      <Link key={team._id} to={`/teams/${team.team._id}`} className="lc-team-item">
+                        <pre><Users size={16} /> {team.team.name}</pre>
+                        {team.team.joinRequests && team.team.joinRequests.length > 0 && (
+                          <span className="lc-join-request-badge">
+                            {team.team.joinRequests.length}
+                          </span>
+                        )}
+                      </Link>
+                    ) : null
+                  )
                 )}
                 <Link to="/teams" className="lc-add-team-link">
                   <Plus size={16} /> Manage Teams
@@ -176,15 +195,15 @@ export default function LetsCode() {
                 <span>Working Problems</span>
               </h3>
               <div className="lc-working-problems-list">
-                {workingProblems.map(problem => {
+                {workingProblems.map((problem) => {
                   const diffConfig = getDifficultyConfig(problem.difficulty);
                   return (
-                    <Link key={problem._id} to={`/problem/${problem._id}`} className="lc-working-problem-link">
+                    <Link key={problem.id} to={`/problem/${problem.id}`} className="lc-working-problem-link">
                       <div className="lc-working-problem-card">
                         <div className="working-problem-header">
                           <div className="working-problem-info">
                             <div className="working-indicator"></div>
-                            <span>{problem._id}. {problem.title}</span>
+                            <span>{problem.id}. {problem.title}</span>
                           </div>
                         </div>
                         <div className="working-problem-footer">
@@ -200,7 +219,6 @@ export default function LetsCode() {
             </div>
           </div>
         </div>
-
         {/* Main Content */}
         <div className="lc-main-content">
           <div className="content-header">
@@ -216,7 +234,6 @@ export default function LetsCode() {
                 </button>
               ))}
             </div>
-
             <div className="search-controls">
               <div className="search-section">
                 <div className="search-input-container">
@@ -237,7 +254,6 @@ export default function LetsCode() {
                 </div>
               </div>
             </div>
-
             {selectedTopics.length > 0 && (
               <div className="lc-active-filters">
                 <span>Filtered by:</span>
@@ -251,9 +267,8 @@ export default function LetsCode() {
               </div>
             )}
           </div>
-
           <div className="lc-problems-list">
-            {filteredProblems.map(problem => {
+            {filteredProblems.map((problem) => {
               const diffConfig = getDifficultyConfig(problem.difficulty);
               const isMarked = problem.isMarked;
               return (
@@ -273,6 +288,11 @@ export default function LetsCode() {
                       </button>
                       <div className="lc-problem-title-container">
                         <span className="lc-problem-title">{problem.id}. {problem.title}</span>
+                        {problem.isSolved && (
+                          <span className="lc-problem-solved" style={{ color: 'var(--success)', marginLeft: '8px' }}>
+                            ✓ Done
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="lc-problem-right">

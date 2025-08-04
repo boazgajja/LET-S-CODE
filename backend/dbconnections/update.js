@@ -1,20 +1,20 @@
 const Problem = require('./../models/Problem');
 const ProblemList = require('./../models/problemlists');
+const Team = require('./../models/Team');
 const { connectDB, disconnectDB } = require('./db');
 
 // Update problem by ID
 const updateProblem = async (id, updateData) => {
   try {
     await connectDB();
-   const updatedProblem = await Problem.findOneAndUpdate(
-  { id: String(id) },  // ✅ Match using custom `id`
-  updateObj,
-  { new: true }        // Optional: return updated document
-);
-
+    const updatedProblem = await Problem.findOneAndUpdate(
+      { id: String(id) },  // ✅ Match using custom `id`
+      updateData,  // Fixed: was using updateObj instead of updateData
+      { new: true }        // Optional: return updated document
+    );
     
     if (updatedProblem) {
-      console.log(`Problem updated: ${updatedProblem.title }`);
+      console.log(`Problem updated: ${updatedProblem.title}`);
     } else {
       console.log('Problem not found for update');
     }
@@ -32,15 +32,14 @@ const updateProblem = async (id, updateData) => {
 const updateProblemInList = async (id, updateData) => {
   try {
     await connectDB();
- const updatedProblem = await Problem.findOneAndUpdate(
-  { id: String(id) },  // ✅ Match using custom `id`
-  updateObj,
-  { new: true }        // Optional: return updated document
-);
-
+    const updatedProblem = await Problem.findOneAndUpdate(
+      { id: String(id) },  // ✅ Match using custom `id`
+      updateData,  // Fixed: was using updateObj instead of updateData
+      { new: true }        // Optional: return updated document
+    );
     
     if (updatedProblem) {
-      console.log(`Problem list item updated: ${updatedProblem.title }`);
+      console.log(`Problem list item updated: ${updatedProblem.title}`);
     } else {
       console.log('Problem list item not found for update');
     }
@@ -94,9 +93,35 @@ const updateMultipleProblems = async (criteria, updateData) => {
   }
 };
 
+// Update team by ID
+const updateTeam = async (teamId, updateData) => {
+  try {
+    await connectDB();
+    const updatedTeam = await Team.findByIdAndUpdate(
+      teamId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+    
+    if (updatedTeam) {
+      console.log(`Team updated: ${updatedTeam.name}`);
+    } else {
+      console.log('Team not found for update');
+    }
+    
+    return updatedTeam;
+  } catch (error) {
+    console.error('Error updating team:', error.message);
+    throw error;
+  } finally {
+    await disconnectDB();
+  }
+};
+
 module.exports = {
   updateProblem,
   updateProblemInList,
   updateProblemBySlug,
-  updateMultipleProblems
+  updateMultipleProblems,
+  updateTeam
 };

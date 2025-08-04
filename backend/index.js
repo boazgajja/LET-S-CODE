@@ -1,17 +1,31 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require('socket.io');
+const io = new Server(server, {
+    cors: {
+        origin: '*', // In production, restrict this to your frontend URL
+        methods: ['GET', 'POST']
+    }
+});
 const port = process.env.PORT || 3001;
 const { connectDB, disconnectDB } = require('./dbconnections/db');
+const jwt = require('jsonwebtoken');
+const User = require('./models/User');
+const Team = require('./models/Team');
 
 // Import route files
 const problemListRoutes = require('./routes/problemListRoute.js');
 const problemRoutes = require('./routes/problemRoutes.js');
 const authRoutes = require('./routes/authRoutes.js');
 const submissionRoutes = require('./routes/submissionRoutes.js');
-// const userRoutes = require('./routes/userRoutes.js');
+const userRoutes = require('./routes/userRoutes.js');
 const teamRoutes = require('./routes/teamRoutes.js');
 const friendRoutes = require('./routes/friendRoutes.js');
+// Remove this line
+// const teamWarRoutes = require('./routes/teamWarRoutes.js');
 
 // Middleware
 app.use(express.json({ limit: '10mb' })); // Parse JSON bodies with size limit
@@ -32,9 +46,11 @@ app.get('/', (req, res) => {
 app.use('/api', problemListRoutes);
 app.use('/api', problemRoutes);
 app.use('/api', authRoutes);
-// app.use('/api/users', userRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api', teamRoutes);
 app.use('/api', friendRoutes);
+// Remove this line
+// app.use('/api', teamWarRoutes);
 app.use('/api/submissions', submissionRoutes);
 
 // Handle 404 for undefined routes
@@ -95,13 +111,120 @@ process.on('SIGINT', () => {
     process.exit(0);
 });
 
+// Socket.io connection handling
+const connectedUsers = new Map(); // Map to store user ID -> socket ID
+
+io.on('connection', async (socket) => {
+    console.log('New client connected');
+    
+    // Authenticate user with token
+    socket.on('authenticate', async (token) => {
+        try {
+            // Verify token
+            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
+            const userId = decoded.userId;
+            
+            // Store user connection
+            connectedUsers.set(userId, socket.id);
+            
+            // Update user's online status
+            await User.findByIdAndUpdate(userId, { isOnline: true, lastActive: Date.now() });
+            
+            // Notify friends that user is online
+            const user = await User.findById(userId);
+            const friends = user.friends.filter(friend => friend.status === 'accepted').map(friend => friend.user.toString());
+            
+            friends.forEach(friendId => {
+                const friendSocketId = connectedUsers.get(friendId);
+                if (friendSocketId) {
+                    io.to(friendSocketId).emit('friend_status_change', { userId, isOnline: true });
+                }
+            });
+            
+            console.log(`User ${userId} authenticated and set to online`);
+            
+            // Join socket rooms for each team the user is in
+            const userWithTeams = await User.findById(userId).populate('teams.team');
+            userWithTeams.teams.forEach(teamData => {
+                socket.join(`team_${teamData.team._id}`);
+            });
+        } catch (error) {
+            console.error('Authentication error:', error);
+        }
+    });
+    
+    // Handle team chat messages
+    socket.on('team_message', async (data) => {
+        try {
+            const { teamId, message, userId } = data;
+            
+            // Save message to database
+            const team = await Team.findById(teamId);
+            if (team) {
+                team.messages.push({
+                    sender: userId,
+                    content: message
+                });
+                await team.save();
+                
+                // Broadcast message to team room
+                io.to(`team_${teamId}`).emit('team_message', {
+                    teamId,
+                    message: {
+                        sender: userId,
+                        content: message,
+                        timestamp: new Date()
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Team message error:', error);
+        }
+    });
+    
+    // Handle disconnect
+    socket.on('disconnect', async () => {
+        console.log('Client disconnected');
+        
+        // Find user ID by socket ID
+        let disconnectedUserId = null;
+        for (const [userId, socketId] of connectedUsers.entries()) {
+            if (socketId === socket.id) {
+                disconnectedUserId = userId;
+                break;
+            }
+        }
+        
+        if (disconnectedUserId) {
+            // Remove from connected users
+            connectedUsers.delete(disconnectedUserId);
+            
+            // Update user's online status
+            await User.findByIdAndUpdate(disconnectedUserId, { isOnline: false, lastActive: Date.now() });
+            
+            // Notify friends that user is offline
+            const user = await User.findById(disconnectedUserId);
+            const friends = user.friends.filter(friend => friend.status === 'accepted').map(friend => friend.user.toString());
+            
+            friends.forEach(friendId => {
+                const friendSocketId = connectedUsers.get(friendId);
+                if (friendSocketId) {
+                    io.to(friendSocketId).emit('friend_status_change', { userId: disconnectedUserId, isOnline: false });
+                }
+            });
+            
+            console.log(`User ${disconnectedUserId} disconnected and set to offline`);
+        }
+    });
+});
+
 // Start server
 async function startServer() {
     try {
         // Connect to MongoDB before starting the server
         await connectDB();
         
-        app.listen(port, () => {
+        server.listen(port, () => {
             console.log(`🚀 Server is running on http://localhost:${port}`);
             console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
             console.log('\n📋 Available endpoints:');
@@ -185,4 +308,4 @@ async function startServer() {
 // Start the server
 startServer();
 
-module.exports = app;
+module.exports = { app, server, io };

@@ -65,7 +65,7 @@ function Problem() {
   const [error, setError] = useState(null);
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('javascript');
-  const [inputHeight, setInputHeight] = useState(200);
+  const [inputHeight, setInputHeight] = useState(80);
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('-- Hit run to see the output --');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -156,7 +156,7 @@ function Problem() {
     if (!isDragging) return;
     
     const deltaY = dragStartY.current - e.clientY;
-    const newHeight = Math.max(100, Math.min(500, startHeight.current + deltaY));
+    const newHeight = Math.max(80, Math.min(500, startHeight.current + deltaY));
     setInputHeight(newHeight);
   };
 
@@ -432,6 +432,8 @@ function Problem() {
 
   const loadExample = (example) => {
     setInput(example.input);
+    if(inputHeight<180)
+    setInputHeight(180);
   };
 
   if (loading) {
@@ -466,14 +468,7 @@ function Problem() {
           <Code size={24} />
           <span>LET'S CODE</span>
         </div>
-        {isMobile && (
-          <button 
-            className="mobile-toggle"
-            onClick={() => setShowLeftPanel(!showLeftPanel)}
-          >
-            {showLeftPanel ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        )}
+        
       </header>
 
       <div className="main-content">
@@ -617,7 +612,16 @@ function Problem() {
         </div>
 
         <div className="right-panel">
+          {isMobile && (
+          <button 
+            className="mobile-toggle"
+            onClick={() => setShowLeftPanel(!showLeftPanel)}
+          >
+            {showLeftPanel ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        )}
           <div className="toolbar">
+            
             <select 
               className="language-select"
               value={language} 
@@ -628,6 +632,7 @@ function Problem() {
               <option value="python">Python</option>
               <option value="java">Java</option>
             </select>
+            
             <div className="toolbar-buttons">
               <button 
                 className="btn run-btn"
