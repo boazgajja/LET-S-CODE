@@ -1,0 +1,507 @@
+/* Dark Mode Friends CSS */
+:root {
+  --primary: #3b82f6;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #06b6d4;
+  
+  /* Dark Theme Colors */
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-card: #1e293b;
+  --bg-hover: #334155;
+  --bg-input: #334155;
+  
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-accent: #60a5fa;
+  
+  --border-primary: #334155;
+  --border-secondary: #475569;
+  --border-accent: #3b82f6;
+  
+  --shadow-primary: rgba(0, 0, 0, 0.3);
+  --shadow-secondary: rgba(0, 0, 0, 0.2);
+}
+
+/* Friends Container */
+.f_friends-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: var(--bg-primary);
+  min-height: 100vh;
+  color: var(--text-primary);
+}
+
+/* Header */
+.f_friends-header {
+  margin-bottom: 2rem;
+}
+
+.f_friends-header h1 {
+  color: var(--text-primary);
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* Friend Code Section */
+.f_friend-code-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-top: 1rem;
+  box-shadow: 0 4px 15px var(--shadow-primary);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.f_my-friend-code {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.f_my-friend-code p {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.f_my-friend-code strong {
+  color: var(--text-accent);
+  font-family: 'Courier New', monospace;
+  background: var(--bg-input);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-secondary);
+}
+
+.f_copy-btn {
+  padding: 0.5rem 1rem;
+  background-color: var(--primary);
+  color: white;
+  border: 1px solid var(--border-accent);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.f_copy-btn:hover {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Add Friend Form */
+.f_add-friend-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.f_friend-input {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-secondary);
+  border-radius: 8px;
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.f_friend-input::placeholder {
+  color: var(--text-muted);
+}
+
+.f_friend-input:focus {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-accent);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.f_add-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--success);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.f_add-btn:hover:not(:disabled) {
+  background-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.f_add-btn:disabled {
+  background-color: var(--text-muted);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Friend Requests Section */
+.f_friend-requests {
+  margin-bottom: 2rem;
+}
+
+.f_friend-requests h2 {
+  color: var(--danger);
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+/* Friends List Section */
+.f_friends-list-section h2 {
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+/* Friends List */
+.f_friends-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+/* Friend Card */
+.f_friend-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px var(--shadow-primary);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+.f_friend-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px var(--shadow-secondary);
+  border-color: var(--border-secondary);
+  background: var(--bg-hover);
+}
+
+.f_friend-card.f_pending {
+  border-color: var(--warning);
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(245, 158, 11, 0.1) 100%);
+}
+
+/* Friend Avatar */
+.f_friend-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid var(--border-secondary);
+}
+
+.f_friend-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.f_avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--info) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Friend Info */
+.f_friend-info {
+  flex: 1;
+}
+
+.f_friend-info h3 {
+  margin: 0 0 0.25rem 0;
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.f_friend-info p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Friend Actions */
+.f_friend-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.f_friend-actions button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.f_accept-btn {
+  background-color: var(--success);
+  color: white;
+}
+
+.f_accept-btn:hover:not(:disabled) {
+  background-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.f_reject-btn {
+  background-color: var(--danger);
+  color: white;
+}
+
+.f_reject-btn:hover:not(:disabled) {
+  background-color: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.f_view-profile-btn {
+  background-color: var(--primary);
+  color: white;
+}
+
+.f_view-profile-btn:hover:not(:disabled) {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.f_remove-btn {
+  background-color: var(--danger);
+  color: white;
+}
+
+.f_remove-btn:hover:not(:disabled) {
+  background-color: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.f_friend-actions button:disabled {
+  background-color: var(--text-muted);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* No Friends Message */
+.f_no-friends {
+  text-align: center;
+  padding: 3rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px var(--shadow-primary);
+}
+
+.f_no-friends p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  margin: 0 0 2rem 0;
+}
+
+.f_no-friends .f_btn {
+  background-color: var(--primary);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.f_no-friends .f_btn:hover {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Loading and Error States */
+.f_loading, .f_error {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  margin: 2rem 0;
+}
+
+.f_loading {
+  color: var(--text-secondary);
+}
+
+.f_error {
+  color: var(--danger);
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(239, 68, 68, 0.1) 100%);
+  border-color: var(--danger);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .f_friends-container {
+    padding: 1rem;
+  }
+  
+  .f_friends-header h1 {
+    font-size: 2rem;
+  }
+  
+  .f_friend-code-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .f_my-friend-code {
+    justify-content: center;
+    text-align: center;
+  }
+  
+  .f_add-friend-form {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .f_friend-input {
+    min-width: unset;
+    width: 100%;
+  }
+  
+  .f_friends-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .f_friend-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .f_friend-actions {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .f_friend-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .f_friend-actions button {
+    width: 100%;
+  }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-secondary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Selection Colors */
+::selection {
+  background-color: rgba(59, 130, 246, 0.3);
+  color: var(--text-primary);
+}
+
+/* Focus Styles */
+button:focus,
+input:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Add these styles at the end of your Friends.css file */
+
+/* Online Status Indicator */
+.f_friend-avatar {
+  position: relative;
+}
+
+.f_online-status {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-card);
+}
+
+.f_online {
+  background-color: var(--success);
+  box-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
+}
+
+.f_offline {
+  background-color: var(--text-muted);
+}
+
+.f_status-text {
+  font-size: 0.8rem;
+  margin-top: 0.25rem !important;
+}
+
+.f_online-text {
+  color: var(--success);
+}
+
+.f_offline-text {
+  color: var(--text-muted);
+}

@@ -1,112 +1,72 @@
 const mongoose = require('mongoose');
 
-// Schema for examples
+// Counter Schema to store sequence
+const counterSchema = new mongoose.Schema({
+  _id: { type: String, required: true },
+  seq: { type: Number, default: 37 } // starting from 35
+});
+const Counter = mongoose.model('Counter', counterSchema);
+
+// Example schema
 const exampleSchema = new mongoose.Schema({
-  input: {
-    type: String,
-    required: false
-  },
-  output: {
-    type: String,
-    required: false
-  },
-  explanation: {
-    type: String,
-    required: false
-  }
+  input: { type: String },
+  output: { type: String },
+  explanation: { type: String }
 }, { _id: false });
 
-// Schema for test cases
+// Test case schema
 const testCaseSchema = new mongoose.Schema({
-  input: {
-    type: String,
-    required: false
-  },
-  output: {
-    type: String,
-    required: false
-  }
+  input: { type: String },
+  output: { type: String }
 }, { _id: false });
 
-// Schema for solution hints
+// Solution hints schema
 const solutionSchema = new mongoose.Schema({
-  hint1: {
-    type: String,
-    required: false
-  },
-  hint2: {
-    type: String,
-    required: false
-  },
-  hint3: {
-    type: String,
-    required: false
-  }
+  hint1: { type: String },
+  hint2: { type: String },
+  hint3: { type: String }
 }, { _id: false });
 
 // Main Problem Schema
 const problemSchema = new mongoose.Schema({
-  id: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  slug: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  title: {
-    type: String,
-    required: true
-  },
-  difficulty: {
-    type: String,
-    required: true,
-    enum: ['Easy', 'Medium', 'Hard']
-  },
-  description: {
-    type: String,
-    required: true
-  },
-  inputFormat: {
-    type: String,
-    required: true
-  },
-  outputFormat: {
-    type: String,
-    required: true
-  },
-  examples: {
-    type: [exampleSchema],
-    required: false
-  },
-  constraints: {
-    type: [String],
-    required: true
-  },
-  tags: {
-    type: [String],
-    required: true
-  },
-  testCases: {
-    type: [testCaseSchema],
-    required: false 
-  },
-  hiddenTestCases: {
-    type: [testCaseSchema],
-    required: false,
-    default: []
-  },
-  solution: {
-    type: solutionSchema,
-    required: false
-  }
+  id: { type: String, required: true, unique: true },
+  slug: { type: String, required: true, unique: true, sparse: true },
+  title: { type: String, required: true },
+  difficulty: { type: String, required: true, enum: ['Easy', 'Medium', 'Hard'] },
+  description: { type: String, required: true },
+  inputFormat: { type: String, required: true },
+  outputFormat: { type: String, required: true },
+  examples: { type: [exampleSchema] },
+  constraints: { type: [String], required: true },
+  tags: { type: [String], required: true },
+  testCases: { type: [testCaseSchema] },
+  hiddenTestCases: { type: [testCaseSchema], default: [] },
+  solution: { type: solutionSchema },
+  addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  solvedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] // Add this line to track users who solved the problem
 }, {
-  timestamps: true // Adds createdAt and updatedAt fields
-}, { _id: false });
+  timestamps: true
+});
 
-// Create the model
+// Auto-increment ID logic
+problemSchema.pre('save', async function (next) {
+  const doc = this;
+  if (doc.isNew && !doc.id) {
+    try {
+      const counter = await Counter.findByIdAndUpdate(
+        { _id: 'problemId' },
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+      );
+      doc.id = counter.seq.toString();
+      next();
+    } catch (err) {
+      next(err);
+    }
+  } else {
+    next();
+  }
+});
+
 const Problem = mongoose.model('Problem', problemSchema);
-
 module.exports = Problem;

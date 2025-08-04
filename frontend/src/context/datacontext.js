@@ -1,0 +1,506 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+
+const DataContext = createContext();
+
+export const DataProvider = ({ children }) => {
+  const [dataMap, setDataMap] = useState({});
+  const [workingProblems, setWorkingProblems] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [friends, setFriends] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [teamWars, setTeamWars] = useState([]);
+  const { user, fetchWithTokenRefresh, logout, updateUser } = useAuth();
+
+  useEffect(() => {
+    const storedWorkingProblems = localStorage.getItem('workingProblems');
+    if (storedWorkingProblems) {
+      try {
+        setWorkingProblems(JSON.parse(storedWorkingProblems));
+      } catch (error) {
+        localStorage.removeItem('workingProblems');
+      }
+    }
+    const storedSubmissions = localStorage.getItem('submissions');
+    if (storedSubmissions) {
+      try {
+        setSubmissions(JSON.parse(storedSubmissions));
+      } catch (error) {
+        localStorage.removeItem('submissions');
+      }
+    }
+  }, []);
+
+  // Data map
+  const addOrUpdateKey = (key, value) => {
+    setDataMap((prev) => ({ ...prev, [key]: value }));
+  };
+  const keyExists = (key) => key in dataMap;
+  const getValue = (key) => dataMap[key];
+
+  // ---------- Working Problems functions (ALL BY .id, the question number) -----------
+  const addWorkingProblem = async (problem) => {
+    if (!problem || !problem.id) return;
+    try {
+      const exists = workingProblems.some((p) => p.id === problem.id);
+      if (!exists) {
+        const updatedProblems = [...workingProblems, problem];
+        setWorkingProblems(updatedProblems);
+        localStorage.setItem('workingProblems', JSON.stringify(updatedProblems));
+        if (user) {
+          await fetchWithTokenRefresh('http://localhost:3001/api/users/working-problems', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ problemId: problem.id }),
+          });
+        }
+      }
+    } catch (error) {}
+  };
+
+  const removeWorkingProblem = async (problemId) => {
+    try {
+      const updatedProblems = workingProblems.filter((p) => p.id !== problemId);
+      setWorkingProblems(updatedProblems);
+      localStorage.setItem('workingProblems', JSON.stringify(updatedProblems));
+      if (user) {
+        await fetchWithTokenRefresh(`http://localhost:3001/api/users/working-problems/${problemId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    } catch (error) {}
+  };
+
+  const fetchWorkingProblems = async () => {
+    try {
+      if (!user) return;
+      const response = await fetchWithTokenRefresh('http://localhost:3001/api/users/working-problems', {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        // Make sure all workingProblems have .id (question number)
+        setWorkingProblems(
+          data.data.map((obj) => (obj.id ? obj : { ...obj, id: obj._id || obj.id }))
+        );
+      }
+    } catch (error) {}
+  };
+
+  // ---------- Teams (unchanged) --------------
+  const fetchTeams = async () => {
+    try {
+      const response = await fetchWithTokenRefresh('http://localhost:3001/api/teams', {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setTeams(data.data);
+      }
+    } catch (error) {}
+  };
+
+  const createTeam = async (teamData) => {
+    try {
+      const response = await fetchWithTokenRefresh('http://localhost:3001/api/teams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(teamData),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        const newTeamEntry = {
+          team: data.data,
+          role: 'owner',
+          joinedAt: data.data.createdAt || new Date().toISOString(),
+          _id: data.data._id
+        };
+        setTeams([...teams, newTeamEntry]);
+        return data.data;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const addProblemToTeam = async (teamId, problemData) => {
+    try {
+      const response = await fetchWithTokenRefresh(`http://localhost:3001/api/teams/${teamId}/problems`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(problemData),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setTeams(teams.map((team) => (team._id === teamId ? data.data : team)));
+        return data.data;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const joinTeam = async (inviteCode) => {
+    try {
+      const response = await fetchWithTokenRefresh('http://localhost:3001/api/teams/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inviteCode }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        fetchTeams();
+        return data;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const getTeamJoinRequests = async (teamId) => {
+    try {
+      const response = await fetchWithTokenRefresh(`http://localhost:3001/api/teams/${teamId}/requests`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        return data.data;
+      } else {
+        return [];
+      }
+    } catch (error) {
+      return [];
+    }
+  };
+
+  const acceptJoinRequest = async (teamId, userId) => {
+    try {
+      const response = await fetchWithTokenRefresh(
+        `http://localhost:3001/api/teams/${teamId}/requests/${userId}/accept`,
+        { method: 'PUT', headers: { 'Content-Type': 'application/json' } }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const rejectJoinRequest = async (teamId, userId) => {
+    try {
+      const response = await fetchWithTokenRefresh(
+        `http://localhost:3001/api/teams/${teamId}/requests/${userId}/reject`,
+        { method: 'PUT', headers: { 'Content-Type': 'application/json' } }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      return false;
+    }
+  };
+
+  // ----------- Friends (unchanged) -----------
+  const fetchFriends = async () => {
+    try {
+      const response = await fetchWithTokenRefresh('http://localhost:3001/api/friends', {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setFriends(data.data);
+      }
+    } catch (error) {}
+  };
+
+  const addFriend = async (friendCode) => {
+    try {
+      const response = await fetchWithTokenRefresh('http://localhost:3001/api/friends/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ friendCode }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        fetchFriends();
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const acceptFriendRequest = async (friendId) => {
+    try {
+      const response = await fetchWithTokenRefresh(
+        `http://localhost:3001/api/friends/${friendId}/accept`,
+        { method: 'PUT', headers: { 'Content-Type': 'application/json' } }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        fetchFriends();
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const rejectFriendRequest = async (friendId) => {
+    try {
+      const response = await fetchWithTokenRefresh(
+        `http://localhost:3001/api/friends/${friendId}/reject`,
+        { method: 'PUT', headers: { 'Content-Type': 'application/json' } }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        fetchFriends();
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const removeFriend = async (friendId) => {
+    try {
+      const response = await fetchWithTokenRefresh(
+        `http://localhost:3001/api/friends/${friendId}`,
+        { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        fetchFriends();
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      return false;
+    }
+  };
+
+  // ---------- Submissions (unchanged) ----------
+  const addSubmission = (submission) => {
+    if (!submission) return;
+    const updatedSubmissions = [submission, ...submissions];
+    setSubmissions(updatedSubmissions);
+    localStorage.setItem('submissions', JSON.stringify(updatedSubmissions));
+
+    if (user && submission.problem) {
+      const updatedUser = { ...user };
+      updatedUser.stats = updatedUser.stats || {};
+      updatedUser.stats.totalSubmissions = (updatedUser.stats.totalSubmissions || 0) + 1;
+
+      if (submission.status === 'correct') {
+        updatedUser.stats.acceptedSubmissions = (updatedUser.stats.acceptedSubmissions || 0) + 1;
+        updatedUser.stats.solvedProblems = updatedUser.stats.solvedProblems || [];
+        if (!updatedUser.stats.solvedProblems.includes(submission.problem)) {
+          updatedUser.stats.solvedProblems.push(submission.problem);
+          updatedUser.stats.problemsSolved = (updatedUser.stats.problemsSolved || 0) + 1;
+        }
+      }
+      updateUser(updatedUser);
+    }
+  };
+
+  const fetchUserSubmissions = async (page = 1, limit = 10) => {
+    try {
+      if (!user) return { submissions: [], pagination: { total: 0, page: 1, totalPages: 0 } };
+      const response = await fetchWithTokenRefresh(
+        `http://localhost:3001/api/submissions/user/${user._id || user.userId}?page=${page}&limit=${limit}`,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        return data.data;
+      } else {
+        return { submissions: [], pagination: { total: 0, page: 1, totalPages: 0 } };
+      }
+    } catch (error) {
+      return { submissions: [], pagination: { total: 0, page: 1, totalPages: 0 } };
+    }
+  };
+
+  // ---------- Team Wars (unchanged) ----------
+  const fetchTeamWars = async () => {
+    try {
+      const response = await fetchWithTokenRefresh('http://localhost:3001/api/team-wars');
+      if (!response.ok) return [];
+      const data = await response.json();
+      if (data.success) {
+        setTeamWars(data.data);
+        return data.data;
+      } else {
+        return [];
+      }
+    } catch (error) {
+      return [];
+    }
+  };
+
+  const getTeamWar = async (warId) => {
+    try {
+      const response = await fetchWithTokenRefresh(`http://localhost:3001/api/team-wars/${warId}`);
+      if (!response.ok) return null;
+      const data = await response.json();
+      if (data.success) {
+        return data.data;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const createTeamWar = async (challengedTeamId, warType, scheduledTime) => {
+    try {
+      const response = await fetchWithTokenRefresh('http://localhost:3001/api/team-wars', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challengedTeamId, warType, scheduledTime }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        await fetchTeamWars();
+        return data.data;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const submitTeamWarSolution = async (warId, problemId, code) => {
+    try {
+      const response = await fetchWithTokenRefresh(
+        `http://localhost:3001/api/team-wars/${warId}/submit`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ problemId, code }),
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        return data;
+      } else {
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  };
+
+  const startTeamWar = async (warId) => {
+    try {
+      const response = await fetchWithTokenRefresh(
+        `http://localhost:3001/api/team-wars/${warId}/start`,
+        { method: 'PUT', headers: { 'Content-Type': 'application/json' } }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        await fetchTeamWars();
+        return { success: true, data: data.data };
+      } else {
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  };
+
+  const joinTeamWar = async (warId, teamId) => {
+    try {
+      const response = await fetchWithTokenRefresh(
+        `http://localhost:3001/api/team-wars/${warId}/join`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ teamId }),
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        await fetchTeamWars();
+        return { success: true, data: data.data };
+      } else {
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  };
+
+  // Clean up
+  const clearData = () => {
+    setWorkingProblems([]);
+    setTeams([]);
+    setFriends([]);
+    setSubmissions([]);
+    localStorage.removeItem('workingProblems');
+    localStorage.removeItem('submissions');
+  };
+
+  // On login, fetch data
+  useEffect(() => {
+    if (user) {
+      fetchTeams();
+      fetchFriends();
+      fetchUserSubmissions();
+      fetchWorkingProblems();
+    } else {
+      clearData();
+    }
+  }, [user]);
+
+  return (
+    <DataContext.Provider
+      value={{
+        dataMap, addOrUpdateKey, keyExists, getValue,
+        user, updateUser, logout,
+        workingProblems, addWorkingProblem, removeWorkingProblem, fetchWorkingProblems,
+        teams, fetchTeams, createTeam, joinTeam, addProblemToTeam,
+        getTeamJoinRequests, acceptJoinRequest, rejectJoinRequest,
+        friends, fetchFriends, addFriend, acceptFriendRequest,
+        rejectFriendRequest, removeFriend,
+        submissions, addSubmission, fetchUserSubmissions,
+        teamWars, fetchTeamWars, getTeamWar, createTeamWar,
+        submitTeamWarSolution, startTeamWar, joinTeamWar,
+        fetchWithTokenRefresh,
+      }}
+    >
+      {children}
+    </DataContext.Provider>
+  );
+};
+
+export const useDataContext = () => {
+  const context = useContext(DataContext);
+  if (!context) {
+    throw new Error('useDataContext must be used within a DataProvider');
+  }
+  return context;
+};
