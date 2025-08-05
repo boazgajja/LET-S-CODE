@@ -1,9 +1,10 @@
+// models/Problem.js
 const mongoose = require('mongoose');
 
 // Counter Schema to store sequence
 const counterSchema = new mongoose.Schema({
   _id: { type: String, required: true },
-  seq: { type: Number, default: 37 } // starting from 35
+  seq: { type: Number, default: 37 }
 });
 const Counter = mongoose.model('Counter', counterSchema);
 
@@ -27,9 +28,9 @@ const solutionSchema = new mongoose.Schema({
   hint3: { type: String }
 }, { _id: false });
 
-// Main Problem Schema
+// Main Problem Schema - FIXED: using Number for id
 const problemSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  id: { type: Number, required: true, unique: true }, // Changed to Number
   slug: { type: String, required: true, unique: true, sparse: true },
   title: { type: String, required: true },
   difficulty: { type: String, required: true, enum: ['Easy', 'Medium', 'Hard'] },
@@ -43,12 +44,12 @@ const problemSchema = new mongoose.Schema({
   hiddenTestCases: { type: [testCaseSchema], default: [] },
   solution: { type: solutionSchema },
   addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-  solvedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] // Add this line to track users who solved the problem
+  solvedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 }, {
   timestamps: true
 });
 
-// Auto-increment ID logic
+// Auto-increment ID logic - FIXED: now returns Number
 problemSchema.pre('save', async function (next) {
   const doc = this;
   if (doc.isNew && !doc.id) {
@@ -58,7 +59,7 @@ problemSchema.pre('save', async function (next) {
         { $inc: { seq: 1 } },
         { new: true, upsert: true }
       );
-      doc.id = counter.seq.toString();
+      doc.id = counter.seq; // Remove .toString() to keep as Number
       next();
     } catch (err) {
       next(err);

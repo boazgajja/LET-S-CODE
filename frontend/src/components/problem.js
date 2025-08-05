@@ -89,7 +89,7 @@ function Problem() {
     const fetchProblem = async () => {
       try {
         setLoading(true);
-        const response = await fetch(process.env.REACT_APP_SERVER_LINK + `/problems/pid/${id}`);
+        const response = await fetch(process.env.REACT_APP_SERVER_LINK + `/problems/${id}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, Code, Calendar, CheckCircle, XCircle } from 'lucide-react';
 import { useDataContext } from '../context/datacontext';
 import '../styles/Submissions.css';
 import Navbar from './Navbar';
 
 const Submissions = () => {
   const { submissionId } = useParams();
+  const navigate = useNavigate();
   const { user, fetchWithTokenRefresh } = useDataContext();
   const [submission, setSubmission] = useState(null);
   const [submissions, setSubmissions] = useState([]);
@@ -106,7 +107,6 @@ const Submissions = () => {
       setPage(page + 1);
     }
   };
-
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleString();
@@ -114,6 +114,10 @@ const Submissions = () => {
 
   const getStatusColor = (status) => {
     return status === 'correct' ? 'var(--success)' : 'var(--danger)';
+  };
+
+  const getStatusIcon = (status) => {
+    return status === 'correct' ? <CheckCircle size={16} /> : <XCircle size={16} />;
   };
 
   if (loading) {
@@ -132,6 +136,11 @@ const Submissions = () => {
       <>
         <Navbar />
         <div className="s_container">
+          <div className="s_back-link">
+            <Link to="/problem" className="s_btn s_btn-primary">
+            Go to Problems
+          </Link>
+          </div>
           <div className="s_error">{error}</div>
           <Link to="/problem" className="s_btn s_btn-primary">
             Go to Problems
@@ -150,7 +159,9 @@ const Submissions = () => {
           submission ? (
             <div className="s_submission-detail">
               <div className="s_back-link">
-                <Link to="/submissions"><ArrowLeft size={16} /> Back to all submissions</Link>
+                <Link to="/submissions">
+                  <ArrowLeft size={16} /> Back to all submissions
+                </Link>
               </div>
               <h2>Submission Details</h2>
               <div className="s_detail-card">
@@ -171,17 +182,18 @@ const Submissions = () => {
                     className="s_status-badge" 
                     style={{ backgroundColor: getStatusColor(submission.status) }}
                   >
+                    {getStatusIcon(submission.status)}
                     {submission.status === 'correct' ? 'Accepted' : 'Wrong Answer'}
                   </span>
                 </div>
                 <div className="s_detail-meta">
-                  <span>Submitted: {formatDate(submission.createdAt)}</span>
+                  <span><Calendar size={14} /> Submitted: {formatDate(submission.createdAt)}</span>
                   {submission.problem?.difficulty && (
-                    <span>Difficulty: {submission.problem.difficulty}</span>
+                    <span>Difficulty: <strong>{submission.problem.difficulty}</strong></span>
                   )}
                 </div>
                 <div className="s_code-container">
-                  <h4>Code</h4>
+                  <h4><Code size={16} /> Submitted Code</h4>
                   <pre className="s_code-block">
                     <code>{submission.code}</code>
                   </pre>
@@ -189,11 +201,23 @@ const Submissions = () => {
               </div>
             </div>
           ) : (
-            <div className="s_not-found">Submission not found</div>
+            <div className="s_not-found">
+              <div className="s_back-link">
+                <Link to="/submissions">
+                  <ArrowLeft size={16} /> Back to all submissions
+                </Link>
+              </div>
+              <p>Submission not found</p>
+            </div>
           )
         ) : (
           // Submissions list view
           <div className="s_submissions-list">
+            <div className="s_back-link">
+             <Link to="/problem" className="s_btn s_btn-primary">
+            Go to Problems
+          </Link>
+            </div>
             <h2>Your Submissions</h2>
             {submissions.length > 0 ? (
               <>
@@ -217,6 +241,7 @@ const Submissions = () => {
                           className="s_status-badge" 
                           style={{ backgroundColor: getStatusColor(sub.status) }}
                         >
+                          {getStatusIcon(sub.status)}
                           {sub.status === 'correct' ? 'Accepted' : 'Wrong Answer'}
                         </span>
                         <span className="s_date">{formatDate(sub.createdAt)}</span>
@@ -231,7 +256,7 @@ const Submissions = () => {
                 {/* Show info message if some problems are deleted */}
                 {submissions.some(sub => isProblemDeleted(sub)) && (
                   <div className="s_info-message">
-                    Some submissions reference deleted problems.
+                    ℹ️ Some submissions reference deleted problems.
                   </div>
                 )}
 

@@ -1,7 +1,9 @@
 .s_container {
   max-width: 1200px;
-  margin: 2rem auto;
+  margin: 1rem auto;
   padding: 0 1rem;
+  /* Add top padding to account for fixed navbar */
+  padding-top: 4rem;
 }
 
 .s_loading, .s_error, .s_not-found {
@@ -19,6 +21,9 @@
 .s_submissions-list h2, .s_submission-detail h2 {
   margin-bottom: 1.5rem;
   color: #ffffff;
+  /* Ensure heading is visible */
+  position: relative;
+  z-index: 1;
 }
 
 .s_list {
@@ -39,6 +44,12 @@
   border-bottom: none;
 }
 
+/* Style for deleted problem items */
+.s_deleted-item {
+  opacity: 0.7;
+  background-color: #2a1f1f;
+}
+
 .s_item-problem a {
   color: #ffffff;
   font-weight: 500;
@@ -48,6 +59,11 @@
 .s_item-problem a:hover {
   color: var(--primary);
   text-decoration: underline;
+}
+
+.s_deleted-problem {
+  color: #999;
+  font-style: italic;
 }
 
 .s_item-details {
@@ -117,20 +133,33 @@
   color: #999;
 }
 
+/* Enhanced back button styling */
 .s_back-link {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-.s_back-link a {
-  display: flex;
+.s_back-link a,
+.s_back-btn {
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   color: var(--primary);
   text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: all 0.2s;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
 }
 
-.s_back-link a:hover {
-  text-decoration: underline;
+.s_back-link a:hover,
+.s_back-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  text-decoration: none;
+  transform: translateX(-2px);
 }
 
 .s_detail-card {
@@ -164,12 +193,16 @@
   color: #999;
   margin-bottom: 1.5rem;
   font-size: 0.875rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .s_code-container {
   background-color: #121212;
   border-radius: 4px;
   padding: 1rem;
+  border: 1px solid #333;
 }
 
 .s_code-container h4 {
@@ -182,12 +215,15 @@
   margin: 0;
   white-space: pre-wrap;
   word-break: break-all;
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 0.875rem;
   line-height: 1.5;
   color: #e0e0e0;
   max-height: 500px;
   overflow-y: auto;
+  background-color: #0d0d0d;
+  padding: 1rem;
+  border-radius: 4px;
 }
 
 .s_empty-state {
@@ -218,4 +254,51 @@
 
 .s_btn-primary:hover {
   background-color: var(--primary-dark);
+}
+
+/* Info message for deleted problems */
+.s_info-message {
+  background-color: #2a2a1a;
+  border: 1px solid #4a4a1a;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-top: 1rem;
+  color: #d4af37;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .s_container {
+    padding: 5rem 0.5rem 1rem;
+  }
+  
+  .s_list-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 1rem;
+  }
+  
+  .s_item-details {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .s_detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .s_detail-meta {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .s_pagination {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
 }
