@@ -1,14 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const ProblemList = require('../models/problemlists'); // Add this import
+const ProblemList = require('../models/problemlists'); // Updated import
+const Problem = require('../models/Problem'); // Add Problem import
 const { authenticateToken, optionalAuth } = require('../utils/jwt');
 const mongoose = require('mongoose');
 
 // Universal async handler
 const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
-// ---------------------- ROUTES ----------------------------
+// ---------------------- EXISTING ROUTES (unchanged) ----------------------------
 
 // Get current user's profile (private)
 router.get('/profile', authenticateToken, asyncHandler(async (req, res) => {
@@ -21,6 +22,7 @@ router.get('/profile', authenticateToken, asyncHandler(async (req, res) => {
 
 // Update current user's profile (private)
 router.put('/profile', authenticateToken, asyncHandler(async (req, res) => {
+    console.log('🔧 Updating user profile:');
     const {
         profile: {
             firstName, lastName, bio, dateOfBirth, country, city, website, github, linkedin
@@ -56,6 +58,7 @@ router.put('/profile', authenticateToken, asyncHandler(async (req, res) => {
         await user.save();
         res.json({ success: true, message: 'Profile updated successfully', data: { user: user.getPublicProfile() } });
     } catch (error) {
+        console.error('❌ Error updating profile:', error);
         if (error.name === 'ValidationError') {
             const errors = Object.values(error.errors).map(err => err.message);
             return res.status(400).json({ success: false, message: 'Validation failed', errors });
@@ -97,18 +100,27 @@ router.put('/avatar', authenticateToken, asyncHandler(async (req, res) => {
     res.json({ success: true, message: 'Avatar updated', data: { avatar: user.profile.avatar } });
 }));
 
-// Get current user's working problems (private)
+// ---------------------- UPDATED WORKING PROBLEMS ROUTES ----------------------------
+
+// Get current user's working problems (private) - FIXED
 router.get('/working-problems', authenticateToken, asyncHandler(async (req, res) => {
     console.log("Fetching working problems for user:", req.user.userId);
     
     try {
-        const user = await User.findById(req.user.userId).populate('workingProblems');
+        const user = await User.findById(req.user.userId)
+            .populate({
+                path: 'workingProblems',
+                populate: {
+                    path: 'problemRef', // Populate the referenced Problem
+                    model: 'Problem'
+                }
+            });
         
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
         
-        console.log("Working problems found:", user.workingProblems);
+        console.log("Working problems found:", user.workingProblems?.length || 0);
         res.json({ 
             success: true, 
             data: user.workingProblems || [] 
@@ -123,23 +135,24 @@ router.get('/working-problems', authenticateToken, asyncHandler(async (req, res)
     }
 }));
 
-// Add to working problems (private)
+// Add to working problems (private) - COMPLETELY REWRITTEN
 router.post('/working-problems', authenticateToken, asyncHandler(async (req, res) => {
-    const { problemId } = req.body;
+    const { problemId } = req.body; // This should be the problem number (1, 2, 3, etc.)
 
     if (!problemId) {
         return res.status(400).json({ success: false, message: 'Problem ID is required' });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(problemId)) {
-        return res.status(400).json({ success: false, message: 'Invalid Problem ID' });
-    }
-
     try {
-        // Verify that the problem exists in ProblemList
-        const problemExists = await ProblemList.findById(problemId);
-        if (!problemExists) {
-            return res.status(404).json({ success: false, message: 'Problem not found' });
+        // Find the problem list entry by problem number
+        const problemListEntry = await ProblemList.findOne({ id: parseInt(problemId) })
+            .populate('problemRef');
+        
+        if (!problemListEntry) {
+            return res.status(404).json({ 
+                success: false, 
+                message: `Problem ${problemId} not found in problem list` 
+            });
         }
 
         const user = await User.findById(req.user.userId);
@@ -152,19 +165,25 @@ router.post('/working-problems', authenticateToken, asyncHandler(async (req, res
             user.workingProblems = [];
         }
 
-        // Check if problem is already in working problems
+        // Check if problem is already in working problems (by MongoDB _id)
         const problemAlreadyExists = user.workingProblems.some(
-            p => p.toString() === problemId.toString()
+            p => p.toString() === problemListEntry._id.toString()
         );
 
         if (!problemAlreadyExists) {
-            user.workingProblems.push(problemId);
+            user.workingProblems.push(problemListEntry._id); // Store ProblemList _id
             await user.save();
-            console.log("Working problem added successfully for user:", req.user.userId);
+            console.log(`Working problem ${problemId} added successfully for user:`, req.user.userId);
         }
 
         // Populate the working problems before sending response
-        await user.populate('workingProblems');
+        await user.populate({
+            path: 'workingProblems',
+            populate: {
+                path: 'problemRef',
+                model: 'Problem'
+            }
+        });
         
         res.json({ 
             success: true, 
@@ -181,15 +200,21 @@ router.post('/working-problems', authenticateToken, asyncHandler(async (req, res
     }
 }));
 
-// Remove from working problems (private)
+// Remove from working problems (private) - FIXED
 router.delete('/working-problems/:problemId', authenticateToken, asyncHandler(async (req, res) => {
-    const { problemId } = req.params;
+    const { problemId } = req.params; // This should be the problem number (1, 2, 3, etc.)
     
-    if (!mongoose.Types.ObjectId.isValid(problemId)) {
-        return res.status(400).json({ success: false, message: 'Invalid Problem ID' });
-    }
-
     try {
+        // Find the problem list entry by problem number
+        const problemListEntry = await ProblemList.findOne({ id: parseInt(problemId) });
+        
+        if (!problemListEntry) {
+            return res.status(404).json({ 
+                success: false, 
+                message: `Problem ${problemId} not found in problem list` 
+            });
+        }
+
         const user = await User.findById(req.user.userId);
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
@@ -200,19 +225,26 @@ router.delete('/working-problems/:problemId', authenticateToken, asyncHandler(as
         }
 
         const initialLength = user.workingProblems.length;
+        // Remove by ProblemList _id
         user.workingProblems = user.workingProblems.filter(
-            prob => prob.toString() !== problemId.toString()
+            prob => prob.toString() !== problemListEntry._id.toString()
         );
 
         const wasRemoved = user.workingProblems.length < initialLength;
         
         if (wasRemoved) {
             await user.save();
-            console.log("Working problem removed successfully for user:", req.user.userId);
+            console.log(`Working problem ${problemId} removed successfully for user:`, req.user.userId);
         }
 
         // Populate the working problems before sending response
-        await user.populate('workingProblems');
+        await user.populate({
+            path: 'workingProblems',
+            populate: {
+                path: 'problemRef',
+                model: 'Problem'
+            }
+        });
 
         res.json({ 
             success: true, 
@@ -228,37 +260,79 @@ router.delete('/working-problems/:problemId', authenticateToken, asyncHandler(as
         });
     }
 }));
-router.delete('/working-problems/:problemId', authenticateToken, asyncHandler(async (req, res) => {
-    const { problemId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(problemId)) {
-        return res.status(400).json({ success: false, message: 'Invalid Problem ID' });
+// Bulk add multiple problems to working list
+router.post('/working-problems/bulk', authenticateToken, asyncHandler(async (req, res) => {
+    const { problemIds } = req.body; // Array of problem numbers
+
+    if (!Array.isArray(problemIds) || problemIds.length === 0) {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'Problem IDs array is required' 
+        });
     }
 
-    const user = await User.findById(req.user.userId);
-    if (!user) {
-        return res.status(404).json({ success: false, message: 'User not found' });
+    try {
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Find all problem list entries
+        const problemListEntries = await ProblemList.find({ 
+            id: { $in: problemIds.map(id => parseInt(id)) } 
+        });
+
+        if (problemListEntries.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'No valid problems found' 
+            });
+        }
+
+        // Initialize workingProblems array if it doesn't exist
+        if (!user.workingProblems) {
+            user.workingProblems = [];
+        }
+
+        let addedCount = 0;
+        for (const entry of problemListEntries) {
+            const alreadyExists = user.workingProblems.some(
+                p => p.toString() === entry._id.toString()
+            );
+            
+            if (!alreadyExists) {
+                user.workingProblems.push(entry._id);
+                addedCount++;
+            }
+        }
+
+        if (addedCount > 0) {
+            await user.save();
+        }
+
+        // Populate before sending response
+        await user.populate({
+            path: 'workingProblems',
+            populate: {
+                path: 'problemRef',
+                model: 'Problem'
+            }
+        });
+
+        res.json({ 
+            success: true, 
+            message: `${addedCount} problems added to working list`, 
+            data: user.workingProblems 
+        });
+    } catch (error) {
+        console.error("Error bulk adding working problems:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error adding problems to working list',
+            error: error.message 
+        });a
     }
-
-    const initialLength = user.workingProblems?.length || 0;
-    user.workingProblems = user.workingProblems?.filter(
-        prob => prob.toString() !== problemId
-    ) || [];
-
-    const wasRemoved = user.workingProblems.length < initialLength;
-
-    if (wasRemoved) {
-        await user.save();
-        console.log("Working problem removed successfully for user:", req.user.userId);
-    }
-
-    await user.populate('workingProblems');
-
-    res.json({
-        success: true,
-        message: wasRemoved ? 'Problem removed from working list' : 'Problem was not in working list',
-        data: user.workingProblems
-    });
 }));
 
 module.exports = router;

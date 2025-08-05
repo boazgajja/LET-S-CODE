@@ -24,21 +24,22 @@ const Friends = () => {
   }, []);
 
   const fetchMyFriendCode = async () => {
-    try {
-      const response = await fetch('${process.env.REACT_APP_SERVER_LINK}/friends/code', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setMyFriendCode(data.data.friendCode);
-      }
-    } catch (error) {
-      console.error('Error fetching friend code:', error);
+  try {
+    const response = await fetch(`${process.env.REACT_APP_SERVER_LINK}/friends/code`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    const data = await response.json();
+    if (response.ok) {
+      setMyFriendCode(data.data.friendCode);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching friend code:', error);
+  }
+};
+
 
   const handleAddFriend = async (e) => {
     e.preventDefault();

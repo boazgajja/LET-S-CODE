@@ -37,9 +37,12 @@ export default function LetsCode() {
         let problemsArray = Array.isArray(response_data)
           ? response_data
           : response_data.data || [];
+        
+        console.log('Fetched problems:', problemsArray);
         setProblems(problemsArray);
         setError(null);
       } catch (err) {
+        console.error('Error fetching problems:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -50,9 +53,14 @@ export default function LetsCode() {
     fetchWorkingProblems();
   }, []);
 
-  // Use question number (problem.id) to check if problem is marked
+  // Check if problem is marked by comparing problem numbers (id field)
   const isProblemMarked = useCallback(
-    (problemId) => workingProblems.some((p) => p.id === problemId),
+    (problemId) => {
+      return workingProblems.some((wp) => {
+        // Compare by problem number (id field)
+        return wp.id === problemId;
+      });
+    },
     [workingProblems]
   );
 
@@ -62,7 +70,10 @@ export default function LetsCode() {
   );
 
   const isProblemSolved = useCallback(
-    (problemId) => user?.stats?.solvedProblems?.some(id => id.toString() === problemId.toString()),
+    (problemId) => {
+      // Compare with solved problems using problem number
+      return user?.stats?.solvedProblems?.some(id => id.toString() === problemId.toString());
+    },
     [user]
   );
 
@@ -76,8 +87,8 @@ export default function LetsCode() {
         })
         .map((problem) => ({
           ...problem,
-          isMarked: isProblemMarked(problem.id),
-          isSolved: isProblemSolved(problem.id),
+          isMarked: isProblemMarked(problem.id), // Use problem number
+          isSolved: isProblemSolved(problem.id), // Use problem number
         })),
     [problems, searchTerm, selectedTopics, isProblemMarked, isProblemSolved]
   );
@@ -99,26 +110,38 @@ export default function LetsCode() {
       }
     : {};
 
-  // Use question number (id) everywhere for working problems
+  // Toggle problem mark using problem number (id field)
   const toggleProblemMark = useCallback(
-    (problemId) => {
-      const problem = problems.find((p) => p.id === problemId);
-      if (!problem) return;
+    async (problemId) => {
+      try {
+        const problem = problems.find((p) => p.id === problemId);
+        if (!problem) {
+          console.error('Problem not found:', problemId);
+          return false;
+        }
 
-      const isMarked = isProblemMarked(problemId);
+        const isMarked = isProblemMarked(problemId);
+        console.log(`Toggling problem ${problemId}, currently marked:`, isMarked);
 
-      if (isMarked) {
-        removeWorkingProblem(problemId); // REMOVE BY question number
-      } else {
-        addWorkingProblem({
-          id: problem.id,        // This must be the question number
-          title: problem.title,
-          difficulty: problem.difficulty,
-          acceptance: problem.acceptance,
-          status: 'working',
-        });
+        if (isMarked) {
+          // Remove from working problems using problem number
+          await removeWorkingProblem(problemId);
+        } else {
+          // Add to working problems using problem data
+          await addWorkingProblem({
+            id: problem.id,        // Problem number
+            title: problem.title,
+            difficulty: problem.difficulty,
+            acceptance: problem.acceptance,
+            status: 'working',
+          });
+        }
+        
+        return false;
+      } catch (error) {
+        console.error('Error toggling problem mark:', error);
+        return false;
       }
-      return false;
     },
     [problems, isProblemMarked, addWorkingProblem, removeWorkingProblem]
   );
@@ -147,7 +170,7 @@ export default function LetsCode() {
   if (error) {
     return (
       <div className="lc_error-container">
-        <p>Error loading problems</p>
+        <p>Error loading problems: {error}</p>
         <button onClick={() => window.location.reload()}>Retry</button>
       </div>
     );
@@ -189,6 +212,7 @@ export default function LetsCode() {
               </div>
             </div>
 
+            {/* Working Problems Section */}
             <div>
               <h3 className="lc-sidebar-title">
                 <Trophy className="lc-trophy-icon" />
@@ -198,7 +222,11 @@ export default function LetsCode() {
                 {workingProblems.map((problem) => {
                   const diffConfig = getDifficultyConfig(problem.difficulty);
                   return (
-                    <Link key={problem.id} to={`/problem/${problem.id}`} className="lc-working-problem-link">
+                    <Link 
+                      key={problem._id} 
+                      to={`/problem/${problem.problemRef?._id || problem._id}`} 
+                      className="lc-working-problem-link"
+                    >
                       <div className="lc-working-problem-card">
                         <div className="working-problem-header">
                           <div className="working-problem-info">
@@ -214,11 +242,14 @@ export default function LetsCode() {
                     </Link>
                   );
                 })}
-                {workingProblems.length === 0 && <p className="lc-no-working-problems">No problems currently being worked on</p>}
+                {workingProblems.length === 0 && (
+                  <p className="lc-no-working-problems">No problems currently being worked on</p>
+                )}
               </div>
             </div>
           </div>
         </div>
+
         {/* Main Content */}
         <div className="lc-main-content">
           <div className="content-header">
@@ -272,14 +303,14 @@ export default function LetsCode() {
               const diffConfig = getDifficultyConfig(problem.difficulty);
               const isMarked = problem.isMarked;
               return (
-                <Link key={problem.id} to={`/problem/${problem.id}`} className="lc-problem-link">
+                <Link key={problem._id} to={`/problem/${problem.problemRef?._id || problem._id}`} className="lc-problem-link">
                   <div className="lc-problem-card">
                     <div className="lc-problem-left">
                       <button
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          toggleProblemMark(problem.id);
+                          toggleProblemMark(problem.id); // Use problem number
                           return false;
                         }}
                         className={`lc-problem-checkbox ${isMarked ? 'lc-problem-checkbox-active' : ''}`}

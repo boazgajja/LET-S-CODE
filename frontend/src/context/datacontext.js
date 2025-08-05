@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 
 const DataContext = createContext();
@@ -10,7 +10,17 @@ export const DataProvider = ({ children }) => {
   const [friends, setFriends] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [teamWars, setTeamWars] = useState([]);
+  const [loading, setLoading] = useState(false);
   const { user, fetchWithTokenRefresh, logout, updateUser } = useAuth();
+
+  // Helper function to get auth headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+  };
 
   useEffect(() => {
     const storedWorkingProblems = localStorage.getItem('workingProblems');
@@ -38,68 +48,208 @@ export const DataProvider = ({ children }) => {
   const keyExists = (key) => key in dataMap;
   const getValue = (key) => dataMap[key];
 
-  // ---------- Working Problems functions (ALL BY .id, the question number) -----------
-  const addWorkingProblem = async (problem) => {
-    if (!problem || !problem.id) return;
+  // ---------- UPDATED Working Problems functions -----------
+  
+  // Fetch working problems - UPDATED
+  const fetchWorkingProblems = useCallback(async () => {
     try {
-      const exists = workingProblems.some((p) => p.id === problem.id);
-      if (!exists) {
-        const updatedProblems = [...workingProblems, problem];
-        setWorkingProblems(updatedProblems);
-        localStorage.setItem('workingProblems', JSON.stringify(updatedProblems));
-        if (user) {
-          await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/users/working-problems`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ problemId: problem.id }),
-          });
-        }
-      }
-    } catch (error) {}
-  };
-
- const removeWorkingProblem = async (problemId) => {
-  try {
-    // Find DB _id for the given question number problemId
-    const problemToRemove = workingProblems.find(p => p.id === problemId);
-    if (!problemToRemove) return;  // not found
-
-    const _id = problemToRemove._id;  // Mongo id needed for api call
-
-    const updatedProblems = workingProblems.filter(p => p.id !== problemId);
-    setWorkingProblems(updatedProblems);
-    localStorage.setItem('workingProblems', JSON.stringify(updatedProblems));
-
-    if (user) {
-      await fetchWithTokenRefresh(
-        `http://localhost:3001/api/users/working-problems/${_id}`,  // use _id here
-        {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-    }
-  } catch (error) {
-    console.error('Error removing working problem', error);
-  }
-};
-
-
-  const fetchWorkingProblems = async () => {
-    try {
+      setLoading(true);
       if (!user) return;
+      
       const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/users/working-problems`, {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' }
       });
-      const data = await response.json();
-      if (response.ok) {
-        // Make sure all workingProblems have .id (question number)
-        setWorkingProblems(
-          data.data.map((obj) => (obj.id ? obj : { ...obj, id: obj._id || obj.id }))
-        );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } catch (error) {}
-  };
+
+      const data = await response.json();
+      console.log('Fetched working problems:', data.data);
+      
+      if (data.success) {
+        // Make sure all workingProblems have .id (question number)
+        const workingProblemsWithId = (data.data || []).map((obj) => 
+          obj.id ? obj : { ...obj, id: obj._id || obj.id }
+        );
+        setWorkingProblems(workingProblemsWithId);
+      } else {
+        console.error('Failed to fetch working problems:', data.message);
+        setWorkingProblems([]);
+      }
+    } catch (error) {
+      console.error('Error fetching working problems:', error);
+      setWorkingProblems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, fetchWithTokenRefresh]);
+
+  // Add working problem - UPDATED
+  const addWorkingProblem = useCallback(async (problemData) => {
+    if (!problemData || !problemData.id) return { success: false, message: 'Invalid problem data' };
+    
+    try {
+      console.log('Adding working problem:', problemData);
+      
+      // Check if already exists locally
+      const exists = workingProblems.some((p) => p.id === problemData.id);
+      if (exists) {
+        return { success: false, message: 'Problem already in working list' };
+      }
+
+      // Update local state optimistically
+      const updatedProblems = [...workingProblems, problemData];
+      setWorkingProblems(updatedProblems);
+      localStorage.setItem('workingProblems', JSON.stringify(updatedProblems));
+      
+      if (user) {
+        const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/users/working-problems`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ problemId: problemData.id })
+        });
+
+        if (!response.ok) {
+          // Rollback on failure
+          setWorkingProblems(workingProblems);
+          localStorage.setItem('workingProblems', JSON.stringify(workingProblems));
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Add working problem response:', data);
+
+        if (data.success) {
+          // Update with server response
+          const workingProblemsWithId = (data.data || []).map((obj) => 
+            obj.id ? obj : { ...obj, id: obj._id || obj.id }
+          );
+          setWorkingProblems(workingProblemsWithId);
+          localStorage.setItem('workingProblems', JSON.stringify(workingProblemsWithId));
+          return { success: true, message: data.message };
+        } else {
+          // Rollback on server error
+          setWorkingProblems(workingProblems);
+          localStorage.setItem('workingProblems', JSON.stringify(workingProblems));
+          console.error('Failed to add working problem:', data.message);
+          return { success: false, message: data.message };
+        }
+      }
+      
+      return { success: true, message: 'Problem added locally' };
+    } catch (error) {
+      console.error('Error adding working problem:', error);
+      // Rollback on error
+      setWorkingProblems(workingProblems);
+      localStorage.setItem('workingProblems', JSON.stringify(workingProblems));
+      return { success: false, message: error.message };
+    }
+  }, [workingProblems, user, fetchWithTokenRefresh]);
+
+  // Remove working problem - UPDATED
+  const removeWorkingProblem = useCallback(async (problemId) => {
+    try {
+      console.log('Removing working problem:', problemId);
+      
+      // Find the problem to remove
+      const problemToRemove = workingProblems.find(p => p.id === problemId);
+      if (!problemToRemove) {
+        return { success: false, message: 'Problem not found' };
+      }
+
+      // Update local state optimistically
+      const updatedProblems = workingProblems.filter(p => p.id !== problemId);
+      setWorkingProblems(updatedProblems);
+      localStorage.setItem('workingProblems', JSON.stringify(updatedProblems));
+
+      if (user) {
+        // Use MongoDB _id for API call if available, otherwise use problemId
+        const idForAPI = problemToRemove._id || problemId;
+        
+        const response = await fetchWithTokenRefresh(
+          `${process.env.REACT_APP_SERVER_LINK}/users/working-problems/${idForAPI}`,
+          {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
+
+        if (!response.ok) {
+          // Rollback on failure
+          setWorkingProblems(workingProblems);
+          localStorage.setItem('workingProblems', JSON.stringify(workingProblems));
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Remove working problem response:', data);
+
+        if (data.success) {
+          // Update with server response
+          const workingProblemsWithId = (data.data || []).map((obj) => 
+            obj.id ? obj : { ...obj, id: obj._id || obj.id }
+          );
+          setWorkingProblems(workingProblemsWithId);
+          localStorage.setItem('workingProblems', JSON.stringify(workingProblemsWithId));
+          return { success: true, message: data.message };
+        } else {
+          // Rollback on server error
+          setWorkingProblems(workingProblems);
+          localStorage.setItem('workingProblems', JSON.stringify(workingProblems));
+          console.error('Failed to remove working problem:', data.message);
+          return { success: false, message: data.message };
+        }
+      }
+      
+      return { success: true, message: 'Problem removed locally' };
+    } catch (error) {
+      console.error('Error removing working problem:', error);
+      // Rollback on error
+      setWorkingProblems(workingProblems);
+      localStorage.setItem('workingProblems', JSON.stringify(workingProblems));
+      return { success: false, message: error.message };
+    }
+  }, [workingProblems, user, fetchWithTokenRefresh]);
+
+  // Bulk add working problems - NEW
+  const addBulkWorkingProblems = useCallback(async (problemIds) => {
+    try {
+      console.log('Adding bulk working problems:', problemIds);
+      
+      if (!user) {
+        return { success: false, message: 'User not authenticated' };
+      }
+      
+      const response = await fetchWithTokenRefresh(`${process.env.REACT_APP_SERVER_LINK}/users/working-problems/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problemIds })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Bulk add working problems response:', data);
+
+      if (data.success) {
+        const workingProblemsWithId = (data.data || []).map((obj) => 
+          obj.id ? obj : { ...obj, id: obj._id || obj.id }
+        );
+        setWorkingProblems(workingProblemsWithId);
+        localStorage.setItem('workingProblems', JSON.stringify(workingProblemsWithId));
+        return { success: true, message: data.message };
+      } else {
+        console.error('Failed to bulk add working problems:', data.message);
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      console.error('Error bulk adding working problems:', error);
+      return { success: false, message: error.message };
+    }
+  }, [user, fetchWithTokenRefresh]);
 
   // ---------- Teams (unchanged) --------------
   const fetchTeams = async () => {
@@ -487,14 +637,14 @@ export const DataProvider = ({ children }) => {
     } else {
       clearData();
     }
-  }, [user]);
+  }, [user, fetchWorkingProblems]);
 
   return (
     <DataContext.Provider
       value={{
         dataMap, addOrUpdateKey, keyExists, getValue,
         user, updateUser, logout,
-        workingProblems, addWorkingProblem, removeWorkingProblem, fetchWorkingProblems,
+        workingProblems, addWorkingProblem, removeWorkingProblem, fetchWorkingProblems, addBulkWorkingProblems,
         teams, fetchTeams, createTeam, joinTeam, addProblemToTeam,
         getTeamJoinRequests, acceptJoinRequest, rejectJoinRequest,
         friends, fetchFriends, addFriend, acceptFriendRequest,
@@ -503,6 +653,8 @@ export const DataProvider = ({ children }) => {
         teamWars, fetchTeamWars, getTeamWar, createTeamWar,
         submitTeamWarSolution, startTeamWar, joinTeamWar,
         fetchWithTokenRefresh,
+        loading, // Added loading state
+        setWorkingProblems, setTeams // Added utility setters
       }}
     >
       {children}

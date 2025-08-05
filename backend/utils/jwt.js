@@ -65,7 +65,7 @@ const verifyAccessToken = (token) => {
     try {
         return jwt.verify(token, JWT_SECRET);
     } catch (error) {
-        console.log('Token verification failed:', error.message);
+        // console.log('Token verification failed:', error.message);
         return null; // Return null instead of throwing
     }
 };
@@ -94,8 +94,8 @@ const authenticateToken = async (req, res, next) => {
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1];
 
-        console.log('🔐 Auth Header:', authHeader);
-        console.log('🔐 Extracted Token:', token);
+        // console.log('🔐 Auth Header:', authHeader);
+        // console.log('🔐 Extracted Token:', token);
 
         if (!token) {
             return res.status(401).json({
@@ -116,11 +116,11 @@ const authenticateToken = async (req, res, next) => {
             });
         }
 
-        console.log('✅ Decoded Token:', decoded);
+        // console.log('✅ Decoded Token:', decoded);
 
         const user = await User.findById(decoded.userId);
         if (!user || !user.isActive) {
-            console.log('❌ User not found or inactive');
+            // console.log('❌ User not found or inactive');
             return res.status(401).json({
                 success: false,
                 message: 'User not found or inactive',

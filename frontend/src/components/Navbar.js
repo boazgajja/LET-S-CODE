@@ -14,7 +14,8 @@ const Navbar = ({ hideProfileImage = false }) => {
   const location = useLocation();
 
   const getUserInitial = () => {
-    return user?.name?.charAt(0).toUpperCase() || 'A';
+    // console.log('User:', user);
+    return user?.username?.charAt(0).toUpperCase() || 'A';
   };
 
   return (

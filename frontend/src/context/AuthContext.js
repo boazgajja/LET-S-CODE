@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-
+import axios from 'axios';
 const AuthContext = createContext();
 
 export const useAuth = () => {
@@ -223,18 +223,18 @@ export const AuthProvider = ({ children }) => {
       });
       
       const data = await response.json();
-      console.log('📡 Login response:', { success: response.ok, hasUser: !!data.data?.user });
+      // console.log('📡 Login response:', { success: response.ok, hasUser: !!data.data?.user });
       
       if (response.ok && data.success) {
         const userData = data.data.user;
         const tokens = data.data.tokens;
         
-        console.log('💾 Storing login data:', {
-          userId: userData._id,
-          username: userData.username,
-          hasAccessToken: !!tokens.accessToken,
-          hasRefreshToken: !!tokens.refreshToken
-        });
+        // console.log('💾 Storing login data:', {
+        //   userId: userData._id,
+        //   username: userData.username,
+        //   hasAccessToken: !!tokens.accessToken,
+        //   hasRefreshToken: !!tokens.refreshToken
+        // });
         
         // Store in localStorage
         localStorage.setItem('user', JSON.stringify(userData));
@@ -290,14 +290,43 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Update user function
-  const updateUser = useCallback((userData) => {
-    console.log('🔄 Updating user data...');
-    setUser(userData);
-    setIsAuthenticated(true);
-    localStorage.setItem('user', JSON.stringify(userData));
-    console.log('✅ User updated in AuthContext');
-  }, []);
+// Frontend update user function (e.g., in useAuth.js or similar)
+// token must be included if your endpoint is protected
+const updateUser = useCallback(
+  async (userData) => {
+    console.log('🔄 Updating user data (frontend + backend)...');
+
+    try {
+      // 1. Update in database (backend)
+      const res = await axios.put(
+        `${process.env.REACT_APP_SERVER_LINK}/users/profile`,   // Adjust based on your API base URL
+        userData, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`  // IF using JWT
+          }
+        }
+      );
+      if(res.data.success) {
+        // 2. Update frontend state only if backend update is successful
+        setUser(res.data.data.user); // assuming response shape
+        setIsAuthenticated(true);
+        localStorage.setItem('user', JSON.stringify(res.data.data.user));
+        console.log('✅ User updated in AuthContext and DB');
+        return { success: true };
+      } else {
+        // handle update failure (backend returned success: false)
+        return { success: false, message: res.data.message };
+      }
+    } catch (error) {
+      // handle errors (network, validation, etc)
+      console.error("Failed updating user:", error);
+      return { success: false, error: error.message };
+    }
+  },
+  [token]
+);
+
 
   // Logout function
   const logout = useCallback(() => {
