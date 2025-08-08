@@ -10,6 +10,7 @@ const LetsCodeLanding = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
   const { login, register, isAuthenticated, user } = useAuth();
 
@@ -37,8 +38,11 @@ const LetsCodeLanding = () => {
 
   const [errors, setErrors] = useState({});
 
-  // Clear errors when switching forms
-  const clearErrors = () => setErrors({});
+  // Clear errors and success messages when switching forms
+  const clearMessages = () => {
+    setErrors({});
+    setSuccessMessage('');
+  };
 
   // Validation functions
   const validateSignIn = () => {
@@ -105,15 +109,18 @@ const LetsCodeLanding = () => {
     }
 
     setIsLoading(true);
+    setErrors({});
+    setSuccessMessage('');
     
     try {
       const result = await login(signInData);
       
       if (result.success) {
         console.log('✅ Sign in successful');
+        setSuccessMessage('Login successful! Redirecting...');
         setShowSignIn(false);
         setSignInData({ email: '', password: '' });
-        clearErrors();
+        clearMessages();
         // Navigation will be handled by the useEffect
       } else {
         setErrors({ submit: result.message || 'Sign in failed' });
@@ -134,15 +141,18 @@ const LetsCodeLanding = () => {
     }
 
     setIsLoading(true);
+    setErrors({});
+    setSuccessMessage('');
     
     try {
       const { confirmPassword, ...registrationData } = signUpData;
       const result = await register(registrationData);
       
       if (result.success) {
-        alert('Account created successfully! Please sign in.');
-        setShowSignUp(false);
-        setShowSignIn(true);
+        console.log('✅ Registration successful, auto-login completed');
+        setSuccessMessage('Account created successfully! You are now logged in. Redirecting...');
+        
+        // Clear form data
         setSignUpData({ 
           username: '', 
           email: '', 
@@ -151,7 +161,14 @@ const LetsCodeLanding = () => {
           firstName: '', 
           lastName: '' 
         });
-        clearErrors();
+        
+        // Close modal after a short delay to show success message
+        setTimeout(() => {
+          setShowSignUp(false);
+          clearMessages();
+        }, 1500);
+        
+        // Navigation will be handled by the useEffect when auth state updates
       } else {
         setErrors({ submit: result.message || 'Sign up failed' });
       }
@@ -165,7 +182,7 @@ const LetsCodeLanding = () => {
 
   const closeModal = (modalSetter) => {
     modalSetter(false);
-    clearErrors();
+    clearMessages();
     setShowPassword(false);
     setShowConfirmPassword(false);
   };
@@ -185,6 +202,7 @@ const LetsCodeLanding = () => {
       <p className="l_form-subtitle">Sign in to continue coding</p>
       
       {errors.submit && <div className="l_error-message">{errors.submit}</div>}
+      {successMessage && <div className="l_success-message">{successMessage}</div>}
       
       <div className="l_form-group">
         <input 
@@ -225,7 +243,7 @@ const LetsCodeLanding = () => {
         Don't have an account? 
         <button 
           type="button" 
-          onClick={() => { setShowSignIn(false); setShowSignUp(true); }}
+          onClick={() => { setShowSignIn(false); setShowSignUp(true); clearMessages(); }}
           className="l_link-btn"
         >
           Sign up here
@@ -240,6 +258,7 @@ const LetsCodeLanding = () => {
       <p className="l_form-subtitle">Create your account to start coding</p>
       
       {errors.submit && <div className="l_error-message">{errors.submit}</div>}
+      {successMessage && <div className="l_success-message">{successMessage}</div>}
       
       <div className="l_form-row">
         <div className="l_form-group">
@@ -335,7 +354,7 @@ const LetsCodeLanding = () => {
         Already have an account? 
         <button 
           type="button" 
-          onClick={() => { setShowSignUp(false); setShowSignIn(true); }}
+          onClick={() => { setShowSignUp(false); setShowSignIn(true); clearMessages(); }}
           className="l_link-btn"
         >
           Sign in here

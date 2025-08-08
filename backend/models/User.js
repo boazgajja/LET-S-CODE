@@ -74,7 +74,6 @@ const userSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
   }],
   friendCode: { type: String, unique: true },
-  // FIXED: Change to reference ProblemList for consistency
   workingProblems: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ProblemList' }]
 }, {
   timestamps: true,
@@ -104,6 +103,23 @@ userSchema.methods.getPublicProfile = function() {
   delete user.refreshToken;
   return user;
 };
+
+// Hash password before saving - THIS IS THE KEY FIX
+userSchema.pre('save', async function(next) {
+  // Only hash password if it has been modified (or is new)
+  if (!this.isModified('password')) {
+    return next();
+  }
+
+  try {
+    // Hash password with salt rounds of 12
+    const saltRounds = 12;
+    this.password = await bcrypt.hash(this.password, saltRounds);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 // Generate friend code if not exists
 userSchema.pre('save', function(next) {

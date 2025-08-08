@@ -262,34 +262,60 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Register function
-  const register = async (userData) => {
-    try {
-      setIsLoading(true);
-      console.log('📝 Attempting registration...');
+// Updated register function that automatically logs in after successful registration
+const register = async (userData) => {
+  try {
+    setIsLoading(true);
+    console.log('📝 Attempting registration...');
+    
+    const response = await fetch(`${process.env.REACT_APP_SERVER_LINK}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData),
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok && data.success) {
+      console.log('✅ Registration successful');
       
-      const response = await fetch(`${process.env.REACT_APP_SERVER_LINK}/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
-      });
+      // Automatically log in the user after successful registration
+      console.log('🔐 Auto-logging in after registration...');
+      const loginCredentials = {
+        email: userData.email, // or username: userData.username, depending on your login method
+        password: userData.password
+      };
       
-      const data = await response.json();
+      const loginResult = await login(loginCredentials);
       
-      if (response.ok) {
-        console.log('✅ Registration successful');
-        return { success: true, message: data.message };
+      if (loginResult.success) {
+        console.log('✅ Auto-login successful after registration');
+        return { 
+          success: true, 
+          message: data.message,
+          autoLoginSuccess: true,
+          user: loginResult.user 
+        };
       } else {
-        console.error('❌ Registration failed:', data.message);
-        return { success: false, message: data.message };
+        console.log('⚠️ Registration successful but auto-login failed');
+        return { 
+          success: true, 
+          message: data.message,
+          autoLoginSuccess: false,
+          autoLoginError: loginResult.message
+        };
       }
-    } catch (error) {
-      console.error('Registration error:', error);
-      return { success: false, message: 'Network error occurred' };
-    } finally {
-      setIsLoading(false);
+    } else {
+      console.error('❌ Registration failed:', data.message);
+      return { success: false, message: data.message };
     }
-  };
-
+  } catch (error) {
+    console.error('Registration error:', error);
+    return { success: false, message: 'Network error occurred' };
+  } finally {
+    setIsLoading(false);
+  }
+};
 // Frontend update user function (e.g., in useAuth.js or similar)
 // token must be included if your endpoint is protected
 const updateUser = useCallback(

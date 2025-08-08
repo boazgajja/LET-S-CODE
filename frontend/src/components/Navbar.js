@@ -24,7 +24,7 @@ const Navbar = ({ hideProfileImage = false }) => {
         <div className="lc-nav-flex">
           <div className="lc-nav-left">
             <div className="lc-logo-section">
-              <Link to="/problem" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Link to="/home" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Code className="lc-logo-code-icon" />
                 <span className="lc-logo-text">LET'S CODE</span>
               </Link>

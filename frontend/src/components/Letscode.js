@@ -1,13 +1,41 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Trophy, Sparkles, Plus, Users } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Search, Trophy, Sparkles, Plus, Users, Calendar, CheckCircle } from 'lucide-react';
+import axios from 'axios';
 import '../styles/home.css';
 import { useTheme } from '../context/themeContext';
 import { useDataContext } from '../context/datacontext';
 import Navbar from './Navbar';
 
+// Helper component for common problem card inner content
+function ProblemCardInner({ problem, showCalendar, daysAgo, isSolved }) {
+  return (
+    <div className="lc-problem-title-container">
+      <span className="lc-problem-title">
+        {problem.id ? `${problem.id}. ` : ''}{problem.title || 'Untitled Problem'}
+      </span>
+      {isSolved && (
+        <span className="lc-problem-solved" style={{ color: 'var(--success)', marginLeft: '8px' }}>
+          ✓ Done
+        </span>
+      )}
+      {showCalendar && (
+        <div className="home-problem-stats">
+          <span className="days-ago">
+            <Calendar size={14} /> {daysAgo} days ago
+          </span>
+          {problem.solvedBy && Array.isArray(problem.solvedBy) && (
+            <span className="solved-count">{"     "} {problem.solvedBy.length} solved</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function LetsCode() {
   const { theme } = useTheme();
+  const location = useLocation();
   const {
     user,
     workingProblems,
@@ -22,128 +50,186 @@ export default function LetsCode() {
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [problems, setProblems] = useState([]);
+  const [userAddedProblems, setUserAddedProblems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Determine if we're on home page
+  const isHomePage = location.pathname === '/home' || location.pathname === '/';
+
   useEffect(() => {
-    const fetchProblems = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(process.env.REACT_APP_SERVER_LINK + '/problemlist');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        if (isHomePage) {
+          await fetchUserAddedProblems();
+        } else {
+          await fetchProblems();
         }
-        const response_data = await response.json();
-        let problemsArray = Array.isArray(response_data)
-          ? response_data
-          : response_data.data || [];
-        
-        console.log('Fetched problems:', problemsArray);
-        setProblems(problemsArray);
         setError(null);
       } catch (err) {
-        console.error('Error fetching problems:', err);
+        console.error('Error fetching data:', err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
-    fetchTeams();
-    fetchProblems();
-    fetchWorkingProblems();
-  }, []);
 
-  // Check if problem is marked by comparing problem numbers (id field)
+    fetchTeams();
+    fetchData();
+    fetchWorkingProblems();
+  }, [isHomePage]);
+
+  const fetchProblems = async () => {
+    const response = await fetch(process.env.REACT_APP_SERVER_LINK + '/problemlist');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const response_data = await response.json();
+    let problemsArray = Array.isArray(response_data) ? response_data : response_data.data || [];
+    console.log('Fetched problems:', problemsArray);
+    setProblems(problemsArray);
+  };
+
+  const fetchUserAddedProblems = async () => {
+    console.log('Fetching user-added problems...');
+    const token = localStorage.getItem('token');
+    console.log('Using token:', token ? 'Token exists' : 'No token');
+    const response = await axios.get(`${process.env.REACT_APP_SERVER_LINK}/problems/pending`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    console.log('User added problems response:', response.data);
+    if (response.data.success) {
+      setUserAddedProblems(response.data.data);
+    }
+  };
+
+  // Helper function to calculate days ago
+  const getDaysAgo = (dateString) => {
+    if (!dateString) return 0;
+    const problemDate = new Date(dateString);
+    const today = new Date();
+    const diffTime = Math.abs(today - problemDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  // Check if problem is marked - with null safety
   const isProblemMarked = useCallback(
     (problemId) => {
+      if (!problemId || !workingProblems) return false;
       return workingProblems.some((wp) => {
-        // Compare by problem number (id field)
-        return wp.id === problemId;
+        return wp && wp.id && wp.id === problemId;
       });
     },
     [workingProblems]
   );
 
-  const markedCount = React.useMemo(
-    () => problems.filter((problem) => isProblemMarked(problem.id)).length,
-    [problems, isProblemMarked]
+  const markedCount = useMemo(
+    () => {
+      const currentProblems = isHomePage ? userAddedProblems : problems;
+      if (!currentProblems || currentProblems.length === 0) return 0;
+      return currentProblems.filter((problem) => problem && problem.id && isProblemMarked(problem.id)).length;
+    },
+    [isHomePage ? userAddedProblems : problems, isProblemMarked]
   );
 
+  // Fixed isProblemSolved function with proper null checks
   const isProblemSolved = useCallback(
     (problemId) => {
-      // Compare with solved problems using problem number
-      return user?.stats?.solvedProblems?.some(id => id.toString() === problemId.toString());
+      if (!problemId) return false;
+      if (!user || !user.stats || !user.stats.solvedProblems) return false;
+      if (!Array.isArray(user.stats.solvedProblems)) return false;
+      return user.stats.solvedProblems
+        .filter(id => id !== null && id !== undefined)
+        .some(id => {
+          try {
+            return id.toString() === problemId.toString();
+          } catch (error) {
+            console.warn('Error comparing problem IDs:', { id, problemId, error });
+            return false;
+          }
+        });
     },
     [user]
   );
 
-  const filteredProblems = React.useMemo(
-    () =>
-      problems
+  const filteredProblems = useMemo(
+    () => {
+      const currentProblems = isHomePage ? userAddedProblems : problems;
+      if (!currentProblems || !Array.isArray(currentProblems)) return [];
+      return currentProblems
         .filter((problem) => {
-          const matchesSearch = problem.title?.toLowerCase().includes(searchTerm.toLowerCase());
-          const matchesTopics = selectedTopics.length === 0 || selectedTopics.some(topic => problem.tags?.includes(topic));
+          if (!problem) return false;
+          const matchesSearch = problem.title?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false;
+          const matchesTopics = selectedTopics.length === 0 ||
+            (problem.tags && Array.isArray(problem.tags) && selectedTopics.some(topic => problem.tags.includes(topic)));
           return matchesSearch && matchesTopics;
         })
         .map((problem) => ({
           ...problem,
-          isMarked: isProblemMarked(problem.id), // Use problem number
-          isSolved: isProblemSolved(problem.id), // Use problem number
-        })),
-    [problems, searchTerm, selectedTopics, isProblemMarked, isProblemSolved]
+          isMarked: problem.id ? isProblemMarked(problem.id) : false,
+          isSolved: problem.id ? isProblemSolved(problem.id) : false,
+        }));
+    },
+    [isHomePage ? userAddedProblems : problems, searchTerm, selectedTopics, isProblemMarked, isProblemSolved]
   );
 
   const getUserInitial = () => {
     return user?.name?.charAt(0).toUpperCase() || 'A';
   };
 
-  const topicCounts = problems.length > 0
-    ? {
-        Array: problems.filter(p => p.tags?.includes('Array')).length,
-        String: problems.filter(p => p.tags?.includes('String')).length,
-        'Hash Table': problems.filter(p => p.tags?.includes('Hash Table')).length,
-        'Dynamic Programming': problems.filter(p => p.tags?.includes('Dynamic Programming')).length,
-        Math: problems.filter(p => p.tags?.includes('Math')).length,
-        'Linked List': problems.filter(p => p.tags?.includes('Linked List')).length,
-        'Two Pointers': problems.filter(p => p.tags?.includes('Two Pointers')).length,
-        'Binary Search': problems.filter(p => p.tags?.includes('Binary Search')).length,
-      }
-    : {};
+  const topicCounts = useMemo(() => {
+    const currentProblems = isHomePage ? userAddedProblems : problems;
+    if (!currentProblems || currentProblems.length === 0) return {};
+    return {
+      Array: currentProblems.filter(p => p?.tags?.includes('Array')).length,
+      String: currentProblems.filter(p => p?.tags?.includes('String')).length,
+      'Hash Table': currentProblems.filter(p => p?.tags?.includes('Hash Table')).length,
+      'Dynamic Programming': currentProblems.filter(p => p?.tags?.includes('Dynamic Programming')).length,
+      Math: currentProblems.filter(p => p?.tags?.includes('Math')).length,
+      'Linked List': currentProblems.filter(p => p?.tags?.includes('Linked List')).length,
+      'Two Pointers': currentProblems.filter(p => p?.tags?.includes('Two Pointers')).length,
+      'Binary Search': currentProblems.filter(p => p?.tags?.includes('Binary Search')).length,
+    };
+  }, [isHomePage ? userAddedProblems : problems]);
 
-  // Toggle problem mark using problem number (id field)
+  // Toggle problem mark with better error handling
   const toggleProblemMark = useCallback(
     async (problemId) => {
       try {
-        const problem = problems.find((p) => p.id === problemId);
+        if (!problemId) {
+          console.error('Problem ID is required');
+          return false;
+        }
+        const currentProblems = isHomePage ? userAddedProblems : problems;
+        const problem = currentProblems.find((p) => p && p.id === problemId);
         if (!problem) {
           console.error('Problem not found:', problemId);
           return false;
         }
-
         const isMarked = isProblemMarked(problemId);
         console.log(`Toggling problem ${problemId}, currently marked:`, isMarked);
-
         if (isMarked) {
-          // Remove from working problems using problem number
           await removeWorkingProblem(problemId);
         } else {
-          // Add to working problems using problem data
           await addWorkingProblem({
-            id: problem.id,        // Problem number
-            title: problem.title,
-            difficulty: problem.difficulty,
-            acceptance: problem.acceptance,
+            id: problem.id,
+            title: problem.title || 'Untitled Problem',
+            difficulty: problem.difficulty || 'Medium',
+            acceptance: problem.acceptance || 'N/A',
             status: 'working',
           });
         }
-        
         return false;
       } catch (error) {
         console.error('Error toggling problem mark:', error);
         return false;
       }
     },
-    [problems, isProblemMarked, addWorkingProblem, removeWorkingProblem]
+    [isHomePage ? userAddedProblems : problems, isProblemMarked, addWorkingProblem, removeWorkingProblem]
   );
 
   const toggleTopicFilter = (topic) => {
@@ -253,6 +339,12 @@ export default function LetsCode() {
         {/* Main Content */}
         <div className="lc-main-content">
           <div className="content-header">
+            {isHomePage && (
+              <div className="home-page-header">
+                <h2 className="home-title">LetsCode User's Contributed Problems</h2>
+                <p className="home-subtitle"></p>
+              </div>
+            )}
             <div className="topic-tags">
               {Object.entries(topicCounts).map(([topic, count]) => (
                 <button
@@ -271,7 +363,7 @@ export default function LetsCode() {
                   <Search className="search-icon" />
                   <input
                     type="text"
-                    placeholder="Search problems..."
+                    placeholder={isHomePage ? "Search your problems..." : "Search problems..."}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="search-input"
@@ -281,7 +373,7 @@ export default function LetsCode() {
               <div className="controls-section">
                 <div className="progress-count">
                   <Sparkles className="sparkles-icon" />
-                  <span>Progress: {markedCount}/{problems.length} marked</span>
+                  <span>Progress: {markedCount}/{isHomePage ? userAddedProblems.length : problems.length} marked</span>
                 </div>
               </div>
             </div>
@@ -298,48 +390,81 @@ export default function LetsCode() {
               </div>
             )}
           </div>
+
           <div className="lc-problems-list">
             {filteredProblems.map((problem) => {
+              if (!problem || !problem._id) return null;
+              
               const diffConfig = getDifficultyConfig(problem.difficulty);
               const isMarked = problem.isMarked;
+              const showCalendar = isHomePage;
+              const daysAgo = showCalendar ? getDaysAgo(problem.createdAt || problem.dateAdded) : null;
+
               return (
-                <Link key={problem._id} to={`/problem/${problem.problemRef?._id || problem._id}`} className="lc-problem-link">
+                <Link
+                  key={problem._id}
+                  to={
+                    isHomePage
+                      ? `/problems/pending/${problem._id}`
+                      : `/problem/${problem.problemRef?._id || problem._id}`
+                  }
+                  className="lc-problem-link"
+                >
                   <div className="lc-problem-card">
-                    <div className="lc-problem-left">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          toggleProblemMark(problem.id); // Use problem number
-                          return false;
-                        }}
-                        className={`lc-problem-checkbox ${isMarked ? 'lc-problem-checkbox-active' : ''}`}
-                      >
-                        {isMarked && <div className="lc-checkbox-dot"></div>}
-                      </button>
-                      <div className="lc-problem-title-container">
-                        <span className="lc-problem-title">{problem.id}. {problem.title}</span>
-                        {problem.isSolved && (
-                          <span className="lc-problem-solved" style={{ color: 'var(--success)', marginLeft: '8px' }}>
-                            ✓ Done
-                          </span>
-                        )}
+                    {/* Checkbox and title (only on /problems, not in /home) */}
+                    {!isHomePage && (
+                      <div className="lc-problem-left">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleProblemMark(problem.id);
+                          }}
+                          className={`lc-problem-checkbox ${isMarked ? 'lc-problem-checkbox-active' : ''}`}
+                        >
+                          {isMarked && <div className="lc-checkbox-dot"></div>}
+                        </button>
+                        <ProblemCardInner
+                          problem={problem}
+                          showCalendar={false}
+                          daysAgo={daysAgo}
+                          isSolved={problem.isSolved}
+                        />
                       </div>
-                    </div>
+                    )}
+                    {/* Title and stats ONLY on /home */}
+                    {isHomePage && (
+                      <div className="lc-problem-left">
+                        <ProblemCardInner
+                          problem={problem}
+                          showCalendar={true}
+                          daysAgo={daysAgo}
+                          isSolved={problem.isSolved}
+                        />
+                      </div>
+                    )}
+                    {/* Right side (acceptance, difficulty) is always shown */}
                     <div className="lc-problem-right">
                       <div className="lc-acceptance-info">
                         <div className="lc-acceptance-label">Acceptance</div>
-                        <div className="lc-acceptance-value">{problem.acceptance}</div>
+                        <div className="lc-acceptance-value">{problem.acceptance || 'N/A'}</div>
                       </div>
                       <div className={`lc-difficulty-badge ${diffConfig.class}`}>
-                        {problem.difficulty}
+                        {problem.difficulty || 'Medium'}
                       </div>
                     </div>
                   </div>
                 </Link>
               );
             })}
-            {filteredProblems.length === 0 && <p className="lc-no-problems">No problems match your current filters.</p>}
+            {filteredProblems.length === 0 && (
+              <p className="lc-no-problems">
+                {isHomePage
+                  ? "You haven't added any problems yet."
+                  : "No problems match your current filters."
+                }
+              </p>
+            )}
           </div>
         </div>
       </div>

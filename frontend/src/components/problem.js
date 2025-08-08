@@ -1,9 +1,9 @@
-import React, { useState, useEffect , useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import CodeEditor from './editor';
-import { ArrowLeft, Code, Clock, Users, TrendingUp, Lightbulb, ChevronRight, Menu, X  } from 'lucide-react';
-import { useDataContext } from '../context/datacontext'; // Add this import
+import { ArrowLeft, Code, Clock, Users, TrendingUp, Lightbulb, ChevronRight, Menu, X } from 'lucide-react';
+import { useDataContext } from '../context/datacontext';
 import './../styles/problem.css';
 
 const languageMap = {
@@ -17,49 +17,50 @@ const languageMap = {
 const defaultCodeTemplates = {
   javascript: `// Write your solution here
 function solve() {
-    // Your code here
+  // Your code here
 }
 
 solve();`,
-  
+
   python: `# Write your solution here
 def solve():
-    # Your code here
-    pass
-
+  # Your code here
+  pass
 
 # Call your function and print result
 solve()`,
-  
+
   cpp: `#include <iostream>
 using namespace std;
 
 int solve() {
-    // Your code here
-    return 0;
+  // Your code here
+  return 0;
 }
 
 int main() {
-    solve();
-    return 0;
+  solve();
+  return 0;
 }`,
+
+  java: `public class Main {
+  public static int solve() {
+    // Your code here
+    return 0;
+  }
   
-  java: `
-public class Main {
-    public static int solve() {
-        // Your code here
-        return 0;
-    }
-    
-    public static void main(String[] args) {
-        solve();
-    }
+  public static void main(String[] args) {
+    solve();
+  }
 }`
 };
 
 function Problem() {
   const { id } = useParams();
-  const { addSubmission } = useDataContext(); // Add this line
+  const location = useLocation();
+  const isPendingRoute = location.pathname.includes('/problems/pending/');
+  const { addSubmission } = useDataContext();
+
   const [problem, setProblem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -84,29 +85,30 @@ function Problem() {
     setCode(defaultCodeTemplates[language] || '// Write your code here');
   }, [language]);
 
-  // Fetch problem data from API
+  // Fetch problem data from API (dynamic endpoint)
   useEffect(() => {
     const fetchProblem = async () => {
       try {
         setLoading(true);
-        const response = await fetch(process.env.REACT_APP_SERVER_LINK + `/problems/${id}`);
-        
+        const endpoint = isPendingRoute
+          ? `${process.env.REACT_APP_SERVER_LINK}/problems/pending/${id}`
+          : `${process.env.REACT_APP_SERVER_LINK}/problems/${id}`;
+        const response = await fetch(endpoint);
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const result = await response.json();
-        
-        // Extract the actual problem data
         const problemData = result.success ? result.data : result;
         setProblem(problemData);
         console.log('Problem data fetched:', problemData);
-        
+
         // Set initial input to first example if available
         if (problemData.examples && problemData.examples.length > 0) {
           setInput(problemData.examples[0].input);
         }
-        
+
         setError(null);
       } catch (err) {
         console.error('Error fetching problem:', err);
@@ -119,14 +121,13 @@ function Problem() {
     if (id) {
       fetchProblem();
     }
-  }, [id]);
+  }, [id, isPendingRoute]);
 
   // Check for mobile view
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -139,7 +140,6 @@ function Problem() {
         e.stopImmediatePropagation();
       }
     };
-    
     window.addEventListener('error', handleError);
     return () => window.removeEventListener('error', handleError);
   }, []);
@@ -154,7 +154,6 @@ function Problem() {
 
   const handleMouseMove = (e) => {
     if (!isDragging) return;
-    
     const deltaY = dragStartY.current - e.clientY;
     const newHeight = Math.max(80, Math.min(500, startHeight.current + deltaY));
     setInputHeight(newHeight);
@@ -173,7 +172,6 @@ function Problem() {
 
   const handleTouchMove = (e) => {
     if (!isDragging) return;
-    
     const touch = e.touches[0];
     const deltaY = dragStartY.current - touch.clientY;
     const newHeight = Math.max(100, Math.min(500, startHeight.current + deltaY));
@@ -190,7 +188,6 @@ function Problem() {
       document.addEventListener('mouseup', handleMouseUp);
       document.addEventListener('touchmove', handleTouchMove);
       document.addEventListener('touchend', handleTouchEnd);
-      
       return () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
@@ -205,7 +202,6 @@ function Problem() {
       setOutput('Please write some code first!');
       return;
     }
-
     setIsRunning(true);
     const options = {
       method: 'POST',
@@ -221,10 +217,8 @@ function Problem() {
         stdin: input
       }
     };
-
     try {
       const res = await axios.request(options);
-      
       if (res.data.status?.id === 3) { // Accepted
         setOutput(res.data.stdout || 'Code executed successfully (no output)');
       } else if (res.data.stderr) {
@@ -243,19 +237,15 @@ function Problem() {
   };
 
   const submitCode = async () => {
-    // Prevent multiple submissions
     if (isSubmitting) return;
-    
     if (!problem || !problem.testCases) {
       setOutput('No test cases available');
       return;
     }
-
     if (!code.trim()) {
       setOutput('Please write some code first!');
       return;
     }
-
     setIsSubmitting(true);
     let allTestsPassed = true;
     let results = [];
@@ -284,17 +274,12 @@ function Problem() {
             stdin: testCase.input
           }
         };
-
         try {
           const res = await axios.request(options);
           const actualOutput = (res.data.stdout || '').trim();
           const expectedOutput = testCase.output.trim();
           const passed = actualOutput === expectedOutput;
-          
-          if (!passed) {
-            allTestsPassed = false;
-          }
-
+          if (!passed) allTestsPassed = false;
           results.push({
             testCase: i + 1,
             input: testCase.input,
@@ -304,7 +289,6 @@ function Problem() {
             isHidden: i >= visibleTestCases.length,
             error: res.data.stderr || res.data.compile_output
           });
-
         } catch (err) {
           allTestsPassed = false;
           results.push({
@@ -352,7 +336,6 @@ function Problem() {
 
       if (allTestsPassed) {
         resultText += `\n🎉 Congratulations! All tests passed!`;
-        
         // Save submission to database
         if (problem && problem._id) {
           try {
@@ -362,12 +345,9 @@ function Problem() {
               code,
               status: "correct"
             });
-            
-            // Add submission to context
             if (response.data && response.data.success) {
               addSubmission(response.data.data);
             }
-            
             console.log("Submission saved successfully");
           } catch (err) {
             console.error("Failed to save submission:", err.message);
@@ -375,7 +355,6 @@ function Problem() {
         }
       } else {
         resultText += `\n💡 Keep trying! Review the failed test cases above.`;
-        
         // Save incorrect submission
         if (problem && problem._id) {
           try {
@@ -385,19 +364,15 @@ function Problem() {
               code,
               status: "wrong"
             });
-            
-            // Add submission to context
             if (response.data && response.data.success) {
               addSubmission(response.data.data);
             }
-            
             console.log("Submission saved successfully");
           } catch (err) {
             console.error("Failed to save submission:", err.message);
           }
         }
       }
-
       setOutput(resultText);
     } catch (error) {
       console.error('Submission error:', error);
@@ -409,7 +384,6 @@ function Problem() {
 
   const nextHint = () => {
     if (!problem?.solution) return;
-    
     const hints = [problem.solution.hint1, problem.solution.hint2, problem.solution.hint3].filter(Boolean);
     if (currentHint < hints.length - 1) {
       setCurrentHint(currentHint + 1);
@@ -418,22 +392,19 @@ function Problem() {
 
   const getCurrentHints = () => {
     if (!problem?.solution) return [];
-    
     const hints = [problem.solution.hint1, problem.solution.hint2, problem.solution.hint3].filter(Boolean);
     return hints.slice(0, currentHint + 1);
   };
 
   const hasMoreHints = () => {
     if (!problem?.solution) return false;
-    
     const hints = [problem.solution.hint1, problem.solution.hint2, problem.solution.hint3].filter(Boolean);
     return currentHint < hints.length - 1;
   };
 
   const loadExample = (example) => {
     setInput(example.input);
-    if(inputHeight<180)
-    setInputHeight(180);
+    if (inputHeight < 180) setInputHeight(180);
   };
 
   if (loading) {
@@ -468,7 +439,6 @@ function Problem() {
           <Code size={24} />
           <span>LET'S CODE</span>
         </div>
-        
       </header>
 
       <div className="main-content">
@@ -522,7 +492,7 @@ function Problem() {
                 <div key={index} className="exampl-container">
                   <div className="example-header">
                     <span className="example-title">Example {index + 1}</span>
-                    <button 
+                    <button
                       className="load-btn"
                       onClick={() => loadExample(example)}
                     >
@@ -579,7 +549,7 @@ function Problem() {
               <div className="hints-section">
                 <div className="hints-header">
                   <h2 className="section-title">Hints</h2>
-                  <button 
+                  <button
                     className="hints-toggle"
                     onClick={() => setShowHints(!showHints)}
                   >
@@ -596,7 +566,7 @@ function Problem() {
                       </div>
                     ))}
                     {hasMoreHints() && (
-                      <button 
+                      <button
                         className="next-hint-btn"
                         onClick={nextHint}
                       >
@@ -613,18 +583,17 @@ function Problem() {
 
         <div className="right-panel">
           {isMobile && (
-          <button 
-            className="mobile-toggle"
-            onClick={() => setShowLeftPanel(!showLeftPanel)}
-          >
-            {showLeftPanel ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        )}
+            <button
+              className="mobile-toggle"
+              onClick={() => setShowLeftPanel(!showLeftPanel)}
+            >
+              {showLeftPanel ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          )}
           <div className="toolbar">
-            
-            <select 
+            <select
               className="language-select"
-              value={language} 
+              value={language}
               onChange={(e) => setLanguage(e.target.value)}
             >
               <option value="javascript">JavaScript</option>
@@ -632,16 +601,15 @@ function Problem() {
               <option value="python">Python</option>
               <option value="java">Java</option>
             </select>
-            
             <div className="toolbar-buttons">
-              <button 
+              <button
                 className="btn run-btn"
                 onClick={runCode}
                 disabled={isRunning}
               >
                 {isRunning ? 'Running...' : 'Run'}
               </button>
-              <button 
+              <button
                 className="btn submit-btn"
                 onClick={submitCode}
                 disabled={isSubmitting}
@@ -652,14 +620,14 @@ function Problem() {
           </div>
 
           <div className="editor-container">
-            <CodeEditor 
+            <CodeEditor
               language={language}
               value={code}
               onChange={setCode}
             />
           </div>
 
-          <div 
+          <div
             className="drag-handle"
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
@@ -668,7 +636,7 @@ function Problem() {
           <div className="input-output" style={{ height: inputHeight }}>
             <div className="input-section">
               <div className="section-header">Input</div>
-              <textarea 
+              <textarea
                 className="input-textarea"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -685,4 +653,5 @@ function Problem() {
     </div>
   );
 }
+
 export default Problem;

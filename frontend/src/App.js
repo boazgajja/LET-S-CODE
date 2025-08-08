@@ -75,6 +75,16 @@ function AppContent() {
           
           {/* Protected Routes */}
           <Route 
+            path="/home" 
+            element={
+              <RequireAuth>
+                <AuthenticatedLayout>
+                  <LetsCode />
+                </AuthenticatedLayout>
+              </RequireAuth>
+            } 
+          />
+          <Route 
             path="/problem" 
             element={
               <RequireAuth>
@@ -85,17 +95,27 @@ function AppContent() {
             } 
           />
           
-          <Route 
-            path="/problem/:id" 
-            element={
-              <RequireAuth>
-                <AuthenticatedLayout>
-                  <Problem />
-                </AuthenticatedLayout>
-              </RequireAuth>
-            } 
-          />
-          
+          <Route
+              path="/problem/:id"
+              element={
+                <RequireAuth>
+                  <AuthenticatedLayout>
+                    <Problem />
+                  </AuthenticatedLayout>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/problems/pending/:id"
+              element={
+                <RequireAuth>
+                  <AuthenticatedLayout>
+                    <Problem />
+                  </AuthenticatedLayout>
+                </RequireAuth>
+              }
+            />
+
           <Route 
             path="/profile" 
             element={
