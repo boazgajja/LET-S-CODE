@@ -31,11 +31,14 @@ const friendRoutes = require('./routes/friendRoutes.js');
 app.use(express.json({ limit: '10mb' })); // Parse JSON bodies with size limit
 app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Parse URL-encoded bodies
 app.use(cors({
-  origin: 'https://let-s-code-alpha.vercel.app/',
+  origin: 'https://let-s-code-alpha.vercel.app',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
-
+app.options('*', cors({
+  origin: 'https://let-s-code-alpha.vercel.app',
+  credentials: true
+}));
 // Basic health check route
 app.get('/', (req, res) => {
     res.json({
