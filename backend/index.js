@@ -35,10 +35,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
-app.options('*', cors({
-  origin: 'https://let-s-code-alpha.vercel.app',
-  credentials: true
-}));
+
 // Basic health check route
 app.get('/', (req, res) => {
     res.json({
