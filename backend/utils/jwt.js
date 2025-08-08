@@ -91,6 +91,7 @@ const verifyRefreshToken = (token) => {
  */
 const authenticateToken = async (req, res, next) => {
     try {
+        // console.log('🔐 Authenticating token...', req.headers);
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1];
 
@@ -116,11 +117,11 @@ const authenticateToken = async (req, res, next) => {
             });
         }
 
-        // console.log('✅ Decoded Token:', decoded);
+        console.log('✅ Decoded Token:', decoded);
 
         const user = await User.findById(decoded.userId);
         if (!user || !user.isActive) {
-            // console.log('❌ User not found or inactive');
+            console.log('❌ User not found or inactive');
             return res.status(401).json({
                 success: false,
                 message: 'User not found or inactive',
