@@ -46,6 +46,8 @@ const Submissions = () => {
       
       if (response.ok && data.success) {
         setSubmissions(data.data.submissions || []);
+        // console.log(data.data.submissions);
+
         setTotalPages(data.data.pagination.totalPages || 1);
       } else {
         setError(data.message || 'Failed to fetch submissions');
