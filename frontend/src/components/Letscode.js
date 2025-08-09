@@ -129,7 +129,7 @@ export default function LetsCode() {
 
   const markedCount = useMemo(
     () => {
-      const currentProblems = isHomePage ? userAddedProblems : problems;
+      const currentProblems = problems;
       if (!currentProblems || currentProblems.length === 0) return 0;
       return currentProblems.filter((problem) => problem && problem.id && isProblemMarked(problem.id)).length;
     },

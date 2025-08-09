@@ -13,7 +13,6 @@ const languageMap = {
   java: 62
 };
 
-// Default code templates for different languages
 const defaultCodeTemplates = {
   javascript: `// Write your solution here
 function solve() {
@@ -21,7 +20,6 @@ function solve() {
 }
 
 solve();`,
-
   python: `# Write your solution here
 def solve():
   # Your code here
@@ -29,7 +27,6 @@ def solve():
 
 # Call your function and print result
 solve()`,
-
   cpp: `#include <iostream>
 using namespace std;
 
@@ -42,13 +39,12 @@ int main() {
   solve();
   return 0;
 }`,
-
   java: `public class Main {
   public static int solve() {
     // Your code here
     return 0;
   }
-  
+
   public static void main(String[] args) {
     solve();
   }
@@ -80,12 +76,10 @@ function Problem() {
   const dragStartY = useRef(0);
   const startHeight = useRef(0);
 
-  // Initialize code template when language changes
   useEffect(() => {
     setCode(defaultCodeTemplates[language] || '// Write your code here');
   }, [language]);
 
-  // Fetch problem data from API (dynamic endpoint)
   useEffect(() => {
     const fetchProblem = async () => {
       try {
@@ -94,21 +88,13 @@ function Problem() {
           ? `${process.env.REACT_APP_SERVER_LINK}/problems/pending/${id}`
           : `${process.env.REACT_APP_SERVER_LINK}/problems/${id}`;
         const response = await fetch(endpoint);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const result = await response.json();
         const problemData = result.success ? result.data : result;
         setProblem(problemData);
-        console.log('Problem data fetched:', problemData);
-
-        // Set initial input to first example if available
         if (problemData.examples && problemData.examples.length > 0) {
           setInput(problemData.examples[0].input);
         }
-
         setError(null);
       } catch (err) {
         console.error('Error fetching problem:', err);
@@ -117,34 +103,24 @@ function Problem() {
         setLoading(false);
       }
     };
-
-    if (id) {
-      fetchProblem();
-    }
+    if (id) fetchProblem();
   }, [id, isPendingRoute]);
 
-  // Check for mobile view
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Prevent ResizeObserver error
   useEffect(() => {
     const handleError = (e) => {
-      if (e.message.includes('ResizeObserver loop limit exceeded')) {
-        e.stopImmediatePropagation();
-      }
+      if (e.message.includes('ResizeObserver loop limit exceeded')) e.stopImmediatePropagation();
     };
     window.addEventListener('error', handleError);
     return () => window.removeEventListener('error', handleError);
   }, []);
 
-  // Drag functionality
   const handleMouseDown = (e) => {
     setIsDragging(true);
     dragStartY.current = e.clientY;
@@ -159,10 +135,7 @@ function Problem() {
     setInputHeight(newHeight);
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
+  const handleMouseUp = () => setIsDragging(false);
   const handleTouchStart = (e) => {
     setIsDragging(true);
     dragStartY.current = e.touches[0].clientY;
@@ -178,9 +151,7 @@ function Problem() {
     setInputHeight(newHeight);
   };
 
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-  };
+  const handleTouchEnd = () => setIsDragging(false);
 
   useEffect(() => {
     if (isDragging) {
@@ -237,157 +208,178 @@ function Problem() {
   };
 
   const submitCode = async () => {
-    if (isSubmitting) return;
-    if (!problem || !problem.testCases) {
-      setOutput('No test cases available');
-      return;
+  // Early return if already submitting, no problem, or no code
+  if (isSubmitting) return;
+  if (!problem || !problem.testCases) {
+    setOutput('No test cases available');
+    return;
+  }
+  if (!code.trim()) {
+    setOutput('Please write some code first!');
+    return;
+  }
+  setIsSubmitting(true);
+  let allTestsPassed = true;
+  let results = [];
+
+  // Collect all test cases (visible + hidden)
+  const visibleTestCases = problem.testCases || [];
+  const hiddenTestCases = problem.hiddenTestCases || [];
+  const allTestCases = [...visibleTestCases, ...hiddenTestCases];
+
+  let resultText = `\n=== SUBMISSION RESULTS ===\n`;
+
+  try {
+    // Run code on each test case via Judge0
+    for (let i = 0; i < allTestCases.length; i++) {
+      const testCase = allTestCases[i];
+      const options = {
+        method: 'POST',
+        url: process.env.REACT_APP_JUDGE_POST,
+        headers: {
+          'content-type': 'application/json',
+          'X-RapidAPI-Key': '0ab6de0af9msh98d6f9c1bc68e73p155dafjsn99ea5a5188ab',
+          'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
+        },
+        data: {
+          source_code: code,
+          language_id: languageMap[language],
+          stdin: testCase.input
+        }
+      };
+
+      try {
+        // Call Judge0 for execution
+        const res = await axios.request(options);
+        const actualOutput = (res.data.stdout || '').trim();
+        const expectedOutput = testCase.output.trim();
+        const passed = actualOutput === expectedOutput;
+        if (!passed) allTestsPassed = false;
+        results.push({
+          testCase: i + 1,
+          input: testCase.input,
+          expected: expectedOutput,
+          actual: actualOutput,
+          passed: passed,
+          isHidden: i >= visibleTestCases.length,
+          error: res.data.stderr || res.data.compile_output
+        });
+        console.log(`Test case ${i + 1}: ${passed ? 'PASS' : 'FAIL'}`);
+      } catch (err) {
+        allTestsPassed = false;
+        results.push({
+          testCase: i + 1,
+          input: testCase.input,
+          expected: testCase.output,
+          actual: 'Runtime Error',
+          passed: false,
+          isHidden: i >= visibleTestCases.length,
+          error: err.message
+        });
+        console.error(`Test case ${i + 1} failed:`, err);
+      }
     }
-    if (!code.trim()) {
-      setOutput('Please write some code first!');
-      return;
+
+    // Build output text with results
+    const passedCount = results.filter(r => r.passed).length;
+    resultText += `Status: ${allTestsPassed ? '✅ ACCEPTED' : '❌ WRONG ANSWER'}\n`;
+    resultText += `Tests Passed: ${passedCount}/${results.length}\n\n`;
+
+    // Show visible test case details
+    const visibleResults = results.slice(0, visibleTestCases.length);
+    if (visibleResults.length > 0) {
+      resultText += `📋 Visible Test Cases:\n`;
+      visibleResults.forEach(result => {
+        resultText += `Test ${result.testCase}: ${result.passed ? '✅ PASS' : '❌ FAIL'}\n`;
+        if (!result.passed) {
+          resultText += `  ⏩ Input: ${result.input}\n`;
+          resultText += `  👉 Expected: ${result.expected}\n`;
+          resultText += `  👉 Got: ${result.actual}\n`;
+          if (result.error) resultText += `  ⚠️ Error: ${result.error}\n`;
+        }
+      });
     }
-    setIsSubmitting(true);
-    let allTestsPassed = true;
-    let results = [];
 
-    // Combine visible and hidden test cases
-    const visibleTestCases = problem.testCases || [];
-    const hiddenTestCases = problem.hiddenTestCases || [];
-    const allTestCases = [...visibleTestCases, ...hiddenTestCases];
+    // Show hidden test case summary
+    const hiddenResults = results.slice(visibleTestCases.length);
+    if (hiddenResults.length > 0) {
+      resultText += `\n🔒 Hidden Test Cases:\n`;
+      hiddenResults.forEach((result, index) => {
+        resultText += `Hidden Test ${index + 1}: ${result.passed ? '✅ PASS' : '❌ FAIL'}\n`;
+      });
+    }
 
-    let resultText = `\n=== SUBMISSION RESULTS ===\n`;
+    // --- Submission Logic ---
 
-    try {
-      for (let i = 0; i < allTestCases.length; i++) {
-        const testCase = allTestCases[i];
-        const options = {
-          method: 'POST',
-          url: process.env.REACT_APP_JUDGE_POST,
-          headers: {
-            'content-type': 'application/json',
-            'X-RapidAPI-Key': '0ab6de0af9msh98d6f9c1bc68e73p155dafjsn99ea5a5188ab',
-            'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
+    const isPending = location.pathname.includes('/problems/pending/');
+
+    // For pending problems (when solved), call the solve endpoint
+    if (allTestsPassed && isPending && problem && problem._id) {
+      try {
+        const solveResponse = await axios.post(
+          `${process.env.REACT_APP_SERVER_LINK.replace('/api', '')}/api/problems/pending/${id}/solve`,
+          {},
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          }
+        );
+        if (solveResponse.data && solveResponse.data.success) {
+          resultText += `\n${solveResponse.data.message}`;
+        }
+      } catch (err) {
+        resultText += `\n⚠️ Failed to mark pending problem as solved: ${err.message}`;
+        console.error('Solve pending error:', err);
+      }
+    }
+
+    // For regular problems (or incorrect on pending), save a standard submission
+    if (problem && problem._id) {
+      try {
+        const response = await axios.post(
+          `${process.env.REACT_APP_SERVER_LINK}/submissions`,
+          {
+            userId: localStorage.getItem('userId'),
+            code,
+            status: allTestsPassed ? 'correct' : 'wrong',
+            title: problem.title,
+            difficulty: problem.difficulty,
+            problemId: isPending ? null : problem._id,
+            pendingProblemId: isPending ? problem._id : null
           },
-          data: {
-            source_code: code,
-            language_id: languageMap[language],
-            stdin: testCase.input
-          }
-        };
-        try {
-          const res = await axios.request(options);
-          const actualOutput = (res.data.stdout || '').trim();
-          const expectedOutput = testCase.output.trim();
-          const passed = actualOutput === expectedOutput;
-          if (!passed) allTestsPassed = false;
-          results.push({
-            testCase: i + 1,
-            input: testCase.input,
-            expected: expectedOutput,
-            actual: actualOutput,
-            passed: passed,
-            isHidden: i >= visibleTestCases.length,
-            error: res.data.stderr || res.data.compile_output
-          });
-        } catch (err) {
-          allTestsPassed = false;
-          results.push({
-            testCase: i + 1,
-            input: testCase.input,
-            expected: testCase.output,
-            actual: 'Runtime Error',
-            passed: false,
-            isHidden: i >= visibleTestCases.length,
-            error: err.message
-          });
-        }
-      }
-
-      // Display results
-      const passedCount = results.filter(r => r.passed).length;
-      resultText += `Status: ${allTestsPassed ? '✅ ACCEPTED' : '❌ WRONG ANSWER'}\n`;
-      resultText += `Tests Passed: ${passedCount}/${results.length}\n\n`;
-
-      // Show visible test cases results
-      const visibleResults = results.slice(0, visibleTestCases.length);
-      if (visibleResults.length > 0) {
-        resultText += `📋 Visible Test Cases:\n`;
-        visibleResults.forEach(result => {
-          resultText += `Test ${result.testCase}: ${result.passed ? '✅ PASS' : '❌ FAIL'}\n`;
-          if (!result.passed) {
-            resultText += `  📥 Input: ${result.input}\n`;
-            resultText += `  📤 Expected: ${result.expected}\n`;
-            resultText += `  📤 Got: ${result.actual}\n`;
-            if (result.error) {
-              resultText += `  ⚠️ Error: ${result.error}\n`;
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}` // Authorization header is REQUIRED!
             }
           }
-        });
-      }
-
-      // Show hidden test cases results (only pass/fail)
-      const hiddenResults = results.slice(visibleTestCases.length);
-      if (hiddenResults.length > 0) {
-        resultText += `\n🔒 Hidden Test Cases:\n`;
-        hiddenResults.forEach((result, index) => {
-          resultText += `Hidden Test ${index + 1}: ${result.passed ? '✅ PASS' : '❌ FAIL'}\n`;
-        });
-      }
-
-      if (allTestsPassed) {
-        resultText += `\n🎉 Congratulations! All tests passed!`;
-        // Save submission to database
-        if (problem && problem._id) {
-          try {
-            const response = await axios.post(`${process.env.REACT_APP_SERVER_LINK}/submissions`, {
-              userId: localStorage.getItem("userId"),
-              problemId: problem._id,
-              code,
-              status: "correct"
-            });
-            if (response.data && response.data.success) {
-              addSubmission(response.data.data);
-            }
-            console.log("Submission saved successfully");
-          } catch (err) {
-            console.error("Failed to save submission:", err.message);
-          }
+        );
+        if (response.data?.data && addSubmission) {
+          addSubmission(response.data.data);
         }
-      } else {
-        resultText += `\n💡 Keep trying! Review the failed test cases above.`;
-        // Save incorrect submission
-        if (problem && problem._id) {
-          try {
-            const response = await axios.post(`${process.env.REACT_APP_SERVER_LINK}/submissions`, {
-              userId: localStorage.getItem("userId"),
-              problemId: problem._id,
-              code,
-              status: "wrong"
-            });
-            if (response.data && response.data.success) {
-              addSubmission(response.data.data);
-            }
-            console.log("Submission saved successfully");
-          } catch (err) {
-            console.error("Failed to save submission:", err.message);
-          }
-        }
+        console.log('Submission saved:', response.data);
+      } catch (err) {
+        console.error('Failed to save submission:', err.response?.data || err.message);
+        resultText += `\n⚠️ Failed to save submission: ${err.response?.data?.message || err.message}`;
       }
-      setOutput(resultText);
-    } catch (error) {
-      console.error('Submission error:', error);
-      setOutput('Error during submission: ' + error.message);
-    } finally {
-      setIsSubmitting(false);
     }
-  };
 
+    // Final output for the user
+    setOutput(resultText);
+  } catch (error) {
+    console.error('Submission error:', error);
+    setOutput(`Error during submission: ${error.message}`);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+ 
   const nextHint = () => {
     if (!problem?.solution) return;
     const hints = [problem.solution.hint1, problem.solution.hint2, problem.solution.hint3].filter(Boolean);
-    if (currentHint < hints.length - 1) {
-      setCurrentHint(currentHint + 1);
-    }
+    if (currentHint < hints.length - 1) setCurrentHint(currentHint + 1);
   };
 
   const getCurrentHints = () => {
@@ -407,27 +399,23 @@ function Problem() {
     if (inputHeight < 180) setInputHeight(180);
   };
 
-  if (loading) {
-    return (
-      <div className="problem-container">
-        <div className="loading">Loading problem...</div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="problem-container">
+      <div className="loading">Loading problem...</div>
+    </div>
+  );
 
-  if (error || !problem) {
-    return (
-      <div className="problem-container">
-        <div className="error-container">
-          <p>Error loading problem: {error}</p>
-          <Link to="/" className="back-link">
-            <ArrowLeft size={16} />
-            Back to Problems
-          </Link>
-        </div>
+  if (error || !problem) return (
+    <div className="problem-container">
+      <div className="error-container">
+        <p>Error loading problem: {error}</p>
+        <Link to="/" className="back-link">
+          <ArrowLeft size={16} />
+          Back to Problems
+        </Link>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <div className="problem-container">
@@ -440,7 +428,6 @@ function Problem() {
           <span>LET'S CODE</span>
         </div>
       </header>
-
       <div className="main-content">
         <div className={`left-panel ${isMobile && showLeftPanel ? 'show' : ''}`}>
           <div className="problem-header">
@@ -449,7 +436,6 @@ function Problem() {
               {problem.difficulty}
             </span>
           </div>
-
           <div className="problem-stats">
             <div className="stat-item">
               <TrendingUp size={16} />
@@ -464,12 +450,10 @@ function Problem() {
               <span>{new Date(problem.createdAt || Date.now()).toLocaleDateString()}</span>
             </div>
           </div>
-
           <div className="section">
             <h2 className="section-title">Description</h2>
             <p className="description">{problem.description}</p>
           </div>
-
           {problem.inputFormat && (
             <div className="format-section">
               <div className="format-item">
@@ -484,7 +468,6 @@ function Problem() {
               )}
             </div>
           )}
-
           {problem.examples && problem.examples.length > 0 && (
             <div className="section">
               <h2 className="section-title">Examples</h2>
@@ -492,10 +475,7 @@ function Problem() {
                 <div key={index} className="exampl-container">
                   <div className="example-header">
                     <span className="example-title">Example {index + 1}</span>
-                    <button
-                      className="load-btn"
-                      onClick={() => loadExample(example)}
-                    >
+                    <button className="load-btn" onClick={() => loadExample(example)}>
                       Load
                     </button>
                   </div>
@@ -519,7 +499,6 @@ function Problem() {
               ))}
             </div>
           )}
-
           {problem.constraints && problem.constraints.length > 0 && (
             <div className="section">
               <h2 className="section-title">Constraints</h2>
@@ -532,7 +511,6 @@ function Problem() {
               </div>
             </div>
           )}
-
           {problem.tags && problem.tags.length > 0 && (
             <div className="section">
               <h2 className="section-title">Tags</h2>
@@ -543,16 +521,12 @@ function Problem() {
               </div>
             </div>
           )}
-
           {problem.solution && (
             <div className="section">
               <div className="hints-section">
                 <div className="hints-header">
                   <h2 className="section-title">Hints</h2>
-                  <button
-                    className="hints-toggle"
-                    onClick={() => setShowHints(!showHints)}
-                  >
+                  <button className="hints-toggle" onClick={() => setShowHints(!showHints)}>
                     <Lightbulb size={16} />
                     {showHints ? 'Hide Hints' : 'Show Hints'}
                   </button>
@@ -566,10 +540,7 @@ function Problem() {
                       </div>
                     ))}
                     {hasMoreHints() && (
-                      <button
-                        className="next-hint-btn"
-                        onClick={nextHint}
-                      >
+                      <button className="next-hint-btn" onClick={nextHint}>
                         Next Hint
                         <ChevronRight size={16} />
                       </button>
@@ -580,7 +551,6 @@ function Problem() {
             </div>
           )}
         </div>
-
         <div className="right-panel">
           {isMobile && (
             <button
@@ -618,7 +588,6 @@ function Problem() {
               </button>
             </div>
           </div>
-
           <div className="editor-container">
             <CodeEditor
               language={language}
@@ -626,13 +595,11 @@ function Problem() {
               onChange={setCode}
             />
           </div>
-
           <div
             className="drag-handle"
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
           />
-
           <div className="input-output" style={{ height: inputHeight }}>
             <div className="input-section">
               <div className="section-header">Input</div>
